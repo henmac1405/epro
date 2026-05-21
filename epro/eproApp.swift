@@ -1,17 +1,12 @@
-//
-//  eproApp.swift
-//  epro
-//
-//  Created by user on 19/05/26.
-//
-
+ 
 import SwiftUI
-
+import SwiftData
 @main
 struct eproApp: App {
+    @StateObject var controller = Controller()
     var body: some Scene {
         WindowGroup {
-            ContentView()
-        }
+            ContentView().environmentObject(controller)
+        }.modelContainer(for: [AppConfig.self])
     }
 }
