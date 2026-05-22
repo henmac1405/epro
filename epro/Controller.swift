@@ -53,8 +53,8 @@ class Controller : ObservableObject{
     @Published var region_id = ""
     @Published var branch_id = ""
     @Published var branch_name = ""
-    
-    
+    @Published var user_changepassword = ""
+    @Published var user_changepasswordbaru = ""
     
     //Model
     @Published var dataUser : [DataUser] = []
@@ -301,6 +301,7 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
+    
     func getVersion(context: ModelContext) {
         let apiname = "app/version"
         
@@ -413,6 +414,7 @@ class Controller : ObservableObject{
             guard let data = data else { return }
             
             let json = JSON(data)
+            
             let message = json["message"].stringValue
             print("json : \(json)")
             print("message : \(message)")
@@ -458,9 +460,10 @@ class Controller : ObservableObject{
         }.resume()
     }
     
-    func getThemes() {
+    
+    func getChangePassword() {
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
-        let apiname = "apptheme/theme"
+        let apiname = "auth/change-password"
         
         guard let url = URL(string: self.url_api + apiname) else { return }
         print(url)
@@ -470,6 +473,74 @@ class Controller : ObservableObject{
         request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
         request.setValue(self.token, forHTTPHeaderField: "TOKEN")
         request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+   
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "username", value: self.username),
+            URLQueryItem(name: "password", value: self.user_changepassword),
+            URLQueryItem(name: "newpassword", value: self.user_changepasswordbaru),
+        ]
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+  
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            
+            if let error = error {
+                print("Error:", error.localizedDescription)
+                self.showAlert = true
+                self.responseMessage = "Error : \(error.localizedDescription)"
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print(json)
+
+            print(message)
+            print(json["state"])
+            
+            
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                if (json["state"] == true){
+                   
+                    self.showAlert = true
+                    self.responseMessage = message
+                    self.user_password = self.user_changepasswordbaru
+                    
+           
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
+    
+    
+    func getThemes() {
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        let apiname = "apptheme/theme"
+        
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        print("tutup")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+   
         
         var components = URLComponents()
         components.queryItems = [
@@ -495,6 +566,7 @@ class Controller : ObservableObject{
             let json = JSON(data)
             let message = json["message"].stringValue
             print(json)
+
             print(message)
             print(json["state"])
             
