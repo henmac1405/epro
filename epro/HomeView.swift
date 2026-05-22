@@ -1,78 +1,96 @@
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
     @EnvironmentObject var controller: Controller
     @Environment(\.dismiss) private var dismiss
-     
+    @Environment(\.modelContext) private var modelContext
+    @Query private var configs: [AppConfig]
+    
     @State private var selectedTab: String = "HOME"
     @State private var showLogoutAlert: Bool = false
-     
-//    let primaryPurple = Color(red: 0.65, green: 0.02, blue: 0.76)
+    
+    //    let primaryPurple = Color(red: 0.65, green: 0.02, blue: 0.76)
     let lightBlueBG = Color(red: 0.92, green: 0.96, blue: 1.00)
     
     var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_background_image)) { phase in
-                    if let image = phase.image {
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: UIScreen.main.bounds.height * 0.28)
-                    }
-                }
-                
-                Color.white
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .ignoresSafeArea(edges: .top)
-             
-            VStack(spacing: 0) {
-                Text(self.controller.user_fullname)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.top, 10)
-                    .padding(.bottom, 5)
-                Text(self.controller.branch_name)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.top, 5)
-                    .padding(.bottom, 20)
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 24) {
-                        AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_image_header)) { phase in
+        ZStack(alignment: .top) {
+            // scroll start
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    ZStack(alignment: .bottom) {
+                        AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_background_image)) { phase in
                             if let image = phase.image {
                                 image
                                     .resizable()
                                     .scaledToFill()
                                     .frame(maxWidth: .infinity)
-                                    .frame(height: 220)
-                                    .cornerRadius(16)
-                                    .padding(.horizontal, 16)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                    .frame(height: 200)
+                                    .clipped()
+                                     
+                            } else {
+                                // Kontainer kosong transparan saat gambar sedang di-load
+                                Color.clear
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 200)
+                                    .clipped()
                             }
                         }
-                         
-                        if controller.pageName == "HOME"{
-                            MenuView()
-                        } else if controller.pageName == "INPEKSI" {
-                            InpeksiView()
-                        } else if controller.pageName == "CEKLIST BULANAN" {
-                            CeklistBulananView()
-                        } else if controller.pageName == "VERIFIKASI ASSET" {
-                            VerifyAssetView()
-                        } else if controller.pageName ==  "ASSET HISTORY"{
-                            AssetHistoryView()
-                        } else if controller.pageName == "USER" {
-                            UserView()
-                        }
                     }
+                    
+                    
+                    
+                    VStack(spacing: 0) {
+                        Text(self.controller.user_fullname)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 10)
+                            .padding(.bottom, 5)
+                        Text(self.controller.branch_name)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 5)
+                            .padding(.bottom, 20)
+                        
+                        
+                        VStack(spacing: 24) {
+                            AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_image_header)) { phase in
+                                if let image = phase.image {
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 220)
+                                        .cornerRadius(16)
+                                        .padding(.horizontal, 16)
+                                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                }
+                            }
+                            
+                            if controller.pageName == "HOME"{
+                                MenuView()
+                            } else if controller.pageName == "INPEKSI" {
+                                InpeksiView()
+                            } else if controller.pageName == "CEKLIST BULANAN" {
+                                CeklistBulananView()
+                            } else if controller.pageName == "VERIFIKASI ASSET" {
+                                VerifyAssetView()
+                            } else if controller.pageName ==  "ASSET HISTORY"{
+                                AssetHistoryView()
+                            } else if controller.pageName == "USER" {
+                                UserView()
+                            }
+                        }
+                        
+                    }
+                    .padding(.top, -200)
+                    .padding(.bottom, 80)
+                    
+                    Spacer().frame(height: 140)
+                    
                 }
             }
-            .padding(.bottom, 80)
-             
+            // scroll end
             VStack {
                 Spacer()
                 HStack(spacing: 0) {
@@ -90,7 +108,7 @@ struct HomeView: View {
                         selectedTab = "USER"
                         controller.pageName = "USER"
                     }
-                        
+                    
                     BottomTabItem(icon: "arrow.right.isActive", title: "LOGOUT", isSelected: selectedTab == "LOGOUT") {
                         showLogoutAlert = true
                     }
@@ -113,6 +131,7 @@ struct HomeView: View {
         }
         .onAppear() {
             controller.pageName = "HOME"
+            loadConfigOld()
         }
     }
     
@@ -121,6 +140,17 @@ struct HomeView: View {
         print("Sesi akun ditutup, mengalihkan halaman...")
         controller.isLoggedIn = false
     }
+    
+    func loadConfigOld() {
+        
+        if let savedConfig = configs.first {
+            controller.bussinessunit_id_old = savedConfig.bussinessunit_id
+            print("Data dimuat: \(controller.bussinessunit_id_old)")
+        } else {
+            print("Data kosong, menggunakan nilai default.")
+        }
+    }
+    
 }
 
 struct MenuView : View {
@@ -144,13 +174,13 @@ struct MenuView : View {
                 .tracking(0.5)
                 .padding(.top, 8)
             
-             
+            
             LazyVGrid(columns: menuColumns, spacing: 16) {
                 // Inspeksi
                 Button(action: {
                     controller.pageName = "INPEKSI"
                     print(controller.pageName)
-                    })
+                })
                 {
                     MainGridMenuButton(icon: "ico_task", title: "INPEKSI", iconColor: primaryPurple, boxColor: lightBlueBG)
                 }
@@ -184,7 +214,7 @@ struct MenuView : View {
                 {
                     MainGridMenuButton(icon: "scanasset", title: "ASSET HISTORY", iconColor: primaryPurple, boxColor: lightBlueBG)
                 }
-                .buttonStyle(PlainButtonStyle()) 
+                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.horizontal, 16)
@@ -197,6 +227,7 @@ struct MenuView : View {
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
         }
     }
+    
 }
 
 struct MainGridMenuButton: View {

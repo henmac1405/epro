@@ -46,6 +46,7 @@ class Controller : ObservableObject{
     @Published var user_password = ""
     @Published var user_fullname = ""
     @Published var bussinessunit_id = ""
+    @Published var bussinessunit_id_old = ""
     @Published var bussinessunit_name = ""
     @Published var strukturunit_id = ""
     @Published var channel_id = ""
@@ -564,7 +565,7 @@ class Controller : ObservableObject{
     
     
     
-    func getInpeksiByUser() {
+    func getInpeksiByUser(filter : String, taskid : String, taskdate : String,  tasktype : String) {
         let apiname = "inpeksi/show-byuser"
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
         guard let url = URL(string: self.url_api + apiname) else { return }
@@ -572,7 +573,8 @@ class Controller : ObservableObject{
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         
-        //SecretKeyNoLog = getSecretKeyNoLog()
+        self.isLoading = true
+        
         self.SecretKeyNoLog = self.generateToken()
         
         print("username : \(self.username)")
@@ -584,6 +586,10 @@ class Controller : ObservableObject{
         var components = URLComponents()
         components.queryItems = [
             URLQueryItem(name: "username", value: self.username),
+            URLQueryItem(name: "task_id", value: taskid),
+            URLQueryItem(name: "task_date", value: taskdate),
+            URLQueryItem(name: "task_type", value: tasktype),
+            URLQueryItem(name: "filter", value: filter),
         ]
         
         request.httpBody = components.query?.data(using: .utf8)
@@ -609,6 +615,8 @@ class Controller : ObservableObject{
             print("message : \(message)")
             print(json["state"])
             
+            self.task.removeAll()
+            
             DispatchQueue.main.async {
                 self.responseMessage = message
                 if (json["state"] == true){
@@ -617,15 +625,30 @@ class Controller : ObservableObject{
                     self.isLoading = false
                     for (_, subJson):(String, JSON) in json["data"] {
                         let task_id = subJson["task_id"].stringValue
-                        let task_date = subJson["task_date"].stringValue
                         let task_description = subJson["task_description"].stringValue
                         let task_descriptionafter = subJson["task_descriptionafter"].stringValue
                         let task_type = subJson["task_type"].stringValue
                         let task_ismonthly = subJson["task_ismonthly"].intValue
                         let asset_id = subJson["asset_id"].stringValue
+                        
+                        let rawDateString = subJson["task_date"].stringValue
+ 
+                        let inputFormatter = DateFormatter()
+                        inputFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+ 
+                        let outputFormatter = DateFormatter()
+                        outputFormatter.dateFormat = "yyyy-MM-dd"
+ 
+                        var task_date = rawDateString
+                        if let dateObject = inputFormatter.date(from: rawDateString) {
+                            task_date = outputFormatter.string(from: dateObject)
+                        }
+                        
                         print("task_id \(task_id)")
                         self.task.append(Task(task_id: task_id, task_date : task_date, task_description: task_description, task_descriptionafter: task_descriptionafter, task_type: task_type, task_ismonthly: task_ismonthly, asset_id: asset_id))
                     }
+                    
+                    
                      
                     
                      
