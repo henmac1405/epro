@@ -4,7 +4,7 @@ struct UserView: View {
     @EnvironmentObject var controller: Controller
      
     @State private var namaLengkap: String = ""
-    @State private var usernameEmail: String = "userdev"
+    @State private var usernameEmail: String = ""
     @State private var passwordLama: String = ""
     @State private var passwordBaru: String = ""
      
@@ -35,6 +35,7 @@ struct UserView: View {
                                     ProfileCircleIcon(icon: "person.fill", color: primaryPurple)
                                     TextField("", text: $namaLengkap)
                                         .font(.system(size: 16, weight: .medium))
+                                        .disabled(true)
                                 }
                                 .padding(6)
                                 .background(Color.white)
@@ -71,6 +72,11 @@ struct UserView: View {
                         .cornerRadius(24)
                         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
                     }
+                    .onAppear{
+                        self.namaLengkap=controller.user_fullname
+                        self.usernameEmail=controller.username
+                    }
+                    
                     .padding(.horizontal, 16)
                     .padding(.top, 20)
                      
@@ -103,6 +109,17 @@ struct UserView: View {
                              
                             Button(action: {
                                 print("Menyimpan perubahan password...")
+                                
+                                if self.passwordLama.isEmpty || self.passwordBaru.isEmpty {
+                                    self.controller.showAlert = true
+                                    self.controller.responseMessage = "Password tidak boleh kosong"
+                                } else {
+                                    
+                                    self.controller.user_changepassword=self.passwordLama
+                                    self.controller.user_changepasswordbaru=self.passwordBaru
+                                    self.controller.getChangePassword()
+                                }
+                                
                             }) {
                                 Text("Simpan")
                                     .font(.system(size: 16, weight: .semibold))
