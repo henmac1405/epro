@@ -13,14 +13,16 @@ struct InpeksiView: View {
     @State private var task_date = "Semua Tanggal"
     @State private var showCalendar = false
     @State private var showDate = Date()
+    @State private var filtertask_id = ""
+    @State private var filtertask_date = ""
+    @State private var filtertask_descr = ""
+    @State private var filtertask_type = ""
     
     @State private var primaryPurple = Color(red: 0.53, green: 0.00, blue: 0.56)
     let lightGrayBG = Color(red: 0.96, green: 0.95, blue: 0.97)
     
     var body: some View {
         ZStack() {
-            Color(red: 0.95, green: 0.95, blue: 0.96)
-                .ignoresSafeArea()
             
             VStack(alignment: .leading, spacing: 16) {
                 
@@ -54,10 +56,11 @@ struct InpeksiView: View {
                                 let formatter = DateFormatter()
                                 formatter.dateFormat = "yyyy-MM-dd"
                                 self.task_date = formatter.string(from: self.showDate)
+                                self.filtertask_date = formatter.string(from: self.showDate)
                                 
                                 showCalendar = false
                             }
-                                .padding()
+                            .padding()
                         }
                         .presentationDetents([.medium])
                     }
@@ -82,6 +85,9 @@ struct InpeksiView: View {
                         
                         TextField("Cari deskripsi...", text: $searchText)
                             .font(.system(size: 16))
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled(true)
+                            .textInputAutocapitalization(.never)
                     }
                     .padding(.leading, 8)
                     .frame(height: 48)
@@ -109,7 +115,10 @@ struct InpeksiView: View {
                 .padding(.horizontal, 16)
                 
                 HStack(spacing: 12) {
-                    Button(action: { print("Filter dieksekusi") }) {
+                    Button(action: {
+                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
+                        
+                    }) {
                         HStack {
                             Image(systemName: "line.3.horizontal.decrease.circle.fill")
                             Text("Filter")
@@ -124,7 +133,11 @@ struct InpeksiView: View {
                     
                     Button(action: {
                         searchText = ""
+                        filtertask_id = ""
+                        filtertask_date = ""
+                        filtertask_type = ""
                         selectedRowsLimit = 5
+                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
                     }) {
                         HStack {
                             Image(systemName: "arrow.counterclockwise")
@@ -160,105 +173,119 @@ struct InpeksiView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
                 
-                ScrollView(.horizontal, showsIndicators: true) {
-                    //Header tabel
-                    HStack(spacing: 0) {
-                        Text("ID")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Text("Description")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Text("Tanggal")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Text("Aksi")
-                            .frame(width: 60, alignment: .trailing)
-                    }
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Color(.black))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 16)
-                    .background(Color(red: 0.96, green: 0.96, blue: 0.98))
-                    
-                    Divider()
-                        .background(Color(.systemGray4))
-                    
-                    //Detil Table
-                     
-                    VStack(spacing: 0) {
-                        ForEach(self.controller.task, id: \.task_id) { item in
+                if self.controller.isLoading == false {
+                    if self.controller.task.count == 0 {
+                        HStack {
+                            Spacer()
+                            Text("Tidak ada data")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.gray)
+                            Spacer()
+                        }
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: true) {
+                            //Header tabel
                             HStack(spacing: 0) {
-                                // Kolom 1: ID
-                                Text(item.task_id)
-                                    .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.black)
+                                Text("ID")
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                // Kolom 2: Deskripsi
-                                Text(item.task_description)
-                                    .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.black)
+                                Text("Description")
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                // Kolom 3: Tanggal
-                                Text(item.task_date)
-                                    .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.black)
+                                Text("Tanggal")
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                // Kolom 4: Aksi
-                                Button(action: {
-                                    print("Mengedit item: \(item.task_description)")
-                                }) {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 20, weight: .bold))
-                                        .foregroundColor(primaryPurple)
-                                        .frame(width: 60, alignment: .trailing)
-                                }
-                                .buttonStyle(PlainButtonStyle())
+                                Text("Aksi")
+                                    .frame(width: 60, alignment: .trailing)
                             }
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Color(.white))
                             .padding(.horizontal, 24)
-                            .padding(.vertical, 20)
+                            .padding(.vertical, 16)
+                            .background(Color.fromRGBAString(self.controller.main_table_col_color))
                             
                             Divider()
-                                .padding(.horizontal, 16)
+                                .background(Color(.systemGray4))
+                            
+                            //Detil Table
+                            
+                            VStack(spacing: 0) {
+                                ForEach(self.controller.task, id: \.task_id) { item in
+                                    HStack(spacing: 0) {
+                                        // Kolom 1: ID
+                                        Text(item.task_id)
+                                            .font(.system(size: 15, weight: .regular))
+                                            .foregroundColor(.black)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        
+                                        // Kolom 2: Deskripsi
+                                        Text(item.task_description)
+                                            .font(.system(size: 15, weight: .regular))
+                                            .foregroundColor(.black)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        
+                                        // Kolom 3: Tanggal
+                                        Text(item.task_date)
+                                            .font(.system(size: 15, weight: .regular))
+                                            .foregroundColor(.black)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        
+                                        // Kolom 4: Aksi
+                                        Button(action: {
+                                            print("Mengedit item: \(item.task_description)")
+                                        }) {
+                                            Image(systemName: "pencil")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundColor(primaryPurple)
+                                                .frame(width: 60, alignment: .trailing)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                    }
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 20)
+                                    
+                                    Divider()
+                                        .padding(.horizontal, 16)
+                                }
+                            }
+                             
                         }
+                        
+                        //Kontrol Halaman
+                        HStack(spacing: 24) {
+                            Button(action: {
+                                if currentPage > 1 { currentPage -= 1 }
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.gray.opacity(0.7))
+                            }
+                            .disabled(currentPage == 1)
+                            
+                            // Teks Informasi Halaman Aktif
+                            Text("Halaman \(currentPage) dari \(totalPages)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.black.opacity(0.8))
+                            
+                            // Tombol Halaman Berikutnya
+                            Button(action: {
+                                if currentPage < totalPages { currentPage += 1 }
+                            }) {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.gray.opacity(0.7))
+                            }
+                            .disabled(currentPage == totalPages)
+                        }
+                        .padding(.vertical, 24)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(red: 0.96, green: 0.96, blue: 0.98))
                     }
-                    
-                    
-                    
+                } else {
+                    ProgressView()
                 }
                 
-                //Kontrol Halaman
-                HStack(spacing: 24) {
-                    Button(action: {
-                        if currentPage > 1 { currentPage -= 1 }
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.gray.opacity(0.7))
-                    }
-                    .disabled(currentPage == 1)
-                    
-                    // Teks Informasi Halaman Aktif
-                    Text("Halaman \(currentPage) dari \(totalPages)")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black.opacity(0.8))
-                    
-                    // Tombol Halaman Berikutnya
-                    Button(action: {
-                        if currentPage < totalPages { currentPage += 1 }
-                    }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.gray.opacity(0.7))
-                    }
-                    .disabled(currentPage == totalPages)
-                }
-                .padding(.vertical, 24)
-                .frame(maxWidth: .infinity)
-                .background(Color(red: 0.96, green: 0.96, blue: 0.98))
+                
             }
             
             Spacer().frame(height: 120)
@@ -266,7 +293,7 @@ struct InpeksiView: View {
             
         }
         .onAppear() {
-            controller.getInpeksiByUser()
+            controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
             
         }

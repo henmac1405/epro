@@ -9,17 +9,16 @@ struct CeklistBulananView: View {
     @State private var isSudahDicek: Bool = false
     @State private var selectedRowsLimit: Int = 5
     @State private var currentPage: Int = 1
-    @State private var totalPages: Int = 303
+    @State private var totalPages: Int = 2
     @State private var selectedTab: String = "INPEKSI"
     @State private var showLogoutAlert: Bool = false
-     
-    @State private var assetsList: [AssetItem] = [
-        AssetItem(id: "1310052", name: "PANEL LISTRIK PP F1 M.C"),
-        AssetItem(id: "1310053", name: "PANEL LISTRIK PP.ESC F1"),
-        AssetItem(id: "1310054", name: "PANEL LISTRIK PP.SELASA"),
-        AssetItem(id: "1310055", name: "PANEL LISTRIK PP.TENAN"),
-        AssetItem(id: "1310056", name: "PANEL LISTRIK PP.AHU F1")
-    ]
+    
+    @State private var task_date = ""
+    @State private var showCalendar = false
+    @State private var showDate = Date()
+    @State private var filtertask_id = ""
+    
+    @State private var assetsList: [AssetItem] = []
      
     @State private var primaryPurple = Color(red: 0.53, green: 0.00, blue: 0.56)
     let lightGrayBG = Color(red: 0.95, green: 0.94, blue: 0.96)
@@ -28,8 +27,6 @@ struct CeklistBulananView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.95, green: 0.95, blue: 0.96)
-                .ignoresSafeArea()
              
             VStack(spacing: 16) {
                  
@@ -59,19 +56,38 @@ struct CeklistBulananView: View {
                 .padding(.top, 16)
                  
                 HStack {
-                    Image(systemName: "calendar")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 18))
-                    
-                    Text("2026-05-20")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
-                    Spacer()
+                    Button(action: {
+                        self.showCalendar = true
+                    }){
+                        Image(systemName: "calendar")
+                            .foregroundColor(.gray)
+                        Text(task_date)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.black)
+                        Spacer()
+                    }
+                    .sheet(isPresented: $showCalendar) {
+                        VStack {
+                            DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
+                                .datePickerStyle(.graphical)
+                                .padding()
+                            Button("Selesai")
+                            {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-MM-dd"
+                                self.task_date = formatter.string(from: self.showDate)
+                                
+                                showCalendar = false
+                            }
+                            .padding()
+                        }
+                        .presentationDetents([.medium])
+                    }
                 }
                 .padding(.horizontal, 16)
-                .frame(height: 54)
+                .frame(height: 48)
                 .background(lightGrayBG)
-                .cornerRadius(12)
+                .cornerRadius(10)
                 .padding(.horizontal, 16)
                  
                 HStack(spacing: 12) {
@@ -131,11 +147,20 @@ struct CeklistBulananView: View {
                             .frame(width: 90, alignment: .leading)
                         Text("Nama Asset")
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Area/Lantai")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Cycle/m")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Bulan Pengecekan")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Status")
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(headerTextGray)
+                    .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
+                    .background(Color.fromRGBAString(self.controller.main_table_col_color))
                     
                     Divider()
                      
@@ -196,6 +221,9 @@ struct CeklistBulananView: View {
         }
         .onAppear() {
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            self.task_date = formatter.string(from: Date())
         }
     }
 }
