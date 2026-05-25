@@ -3,7 +3,7 @@ import SwiftData
 
 struct LoginView: View {
     @EnvironmentObject var controller : Controller
-    @State private var username: String = "userdev"
+    @State private var username: String = "liyanto"
     @State private var password: String = "rahasia123"
     
     @Environment(\.modelContext) private var modelContext

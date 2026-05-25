@@ -58,20 +58,60 @@ class Controller : ObservableObject{
     
     //Model
     @Published var dataUser : [DataUser] = []
-    @Published var dataBranch : [DataBranch] = []
+    @Published var dataBranch : [DataBranch] = [] 
     @Published var themes : [Themes] = []
     
     @Published var loginSlider : [LoginSlider] = []
     @Published var mainSlider : [MainSlider] = []
     @Published var task : [Task] = []
+    @Published var taskList: [Task] = []
     
+    @Published var tasktype : [TaskType] = []
+    @Published var parttype : [PartType] = []
+
     @Published var assetsList: [AssetItem] = []
     @Published var dataBranchuser : [DataBranchUser] = []
+
+    
+    @Published var selectedTaskForEdit: Task? = nil
     
     
-    
+
     
     // MARK: - Function ----------------------------------------------------------------------------------------------
+    
+    func filterBranch(branchid: String) -> String {
+        if branchid.isEmpty {
+            return ""
+        }
+        if let foundBranch = dataBranch.first(where: { $0.branch_id == branchid }) {
+            return foundBranch.branch_name
+        }
+        print("Branch Tidak Ditemukan")
+        return ""
+    }
+    
+    func filteTaskType(id: String) -> String {
+        if id.isEmpty {
+            return ""
+        }
+        if let foundData = tasktype.first(where: { $0.tasktype_id == id }) {
+            return foundData.tasktype_name
+        }
+        print("Task Type Tidak Ditemukan")
+        return ""
+    }
+    
+    func filtePartType(id: String) -> String {
+        if id.isEmpty {
+            return ""
+        }
+        if let foundData = parttype.first(where: { $0.parttype_id == id }) {
+            return foundData.parttype_name
+        }
+        print("Part Type Tidak Ditemukan")
+        return ""
+    }
     
     func getFormattedDateTimeFull() -> String {
         let formatter = DateFormatter()
@@ -198,58 +238,58 @@ class Controller : ObservableObject{
     
     // MARK: - API ----------------------------------------------------------------------------------------------
       
-    func getAPIKey() {
-        
-        let apiname = "apikey/show"
-        
-        self.signature = generateSignature(secretKey: branch_id)
-        print("signature : \(self.signature)")
-        
-        guard let url = URL(string: self.url_api + apiname) else { return }
-        print(url)
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        
-        let body: [String: Any] = ["":""]
-        
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        request.setValue(self.signature, forHTTPHeaderField: "SECRETKEY")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            
-            
-            if let error = error {
-                print("Error:", error.localizedDescription)
-                self.showAlert = true
-                self.responseMessage = "Error : \(error.localizedDescription)"
-                self.isLoading = false
-                return
-            }
-            
-            guard let data = data else { return }
-            
-            
-            let json = JSON(data)
-            let message = json["message"].stringValue
-            print(message)
-            print(json["state"])
-            
-            DispatchQueue.main.async {
-                self.responseMessage = message
-                if (json["state"] == true){
-                    self.apiKey = json["data"].stringValue
-                    print(self.apiKey)
-                    self.isCorrect = true
-                    self.showAlert = false
-                    self.getToken()
-                } else {
-                    self.isCorrect = false
-                    self.responseMessage = message
-                    self.showAlert = true
-                }
-            }
-        }.resume()
-    }
+//    func getAPIKey() {
+//        
+//        let apiname = "apikey/show"
+//        
+//        self.signature = generateSignature(secretKey: branch_id)
+//        print("signature : \(self.signature)")
+//        
+//        guard let url = URL(string: self.url_api + apiname) else { return }
+//        print(url)
+//        var request = URLRequest(url: url)
+//        request.httpMethod = "POST"
+//        
+//        let body: [String: Any] = ["":""]
+//        
+//        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+//        request.setValue(self.signature, forHTTPHeaderField: "SECRETKEY")
+//        
+//        URLSession.shared.dataTask(with: request) { data, response, error in
+//            
+//            
+//            if let error = error {
+//                print("Error:", error.localizedDescription)
+//                self.showAlert = true
+//                self.responseMessage = "Error : \(error.localizedDescription)"
+//                self.isLoading = false
+//                return
+//            }
+//            
+//            guard let data = data else { return }
+//            
+//            
+//            let json = JSON(data)
+//            let message = json["message"].stringValue
+//            print(message)
+//            print(json["state"])
+//            
+//            DispatchQueue.main.async {
+//                self.responseMessage = message
+//                if (json["state"] == true){
+//                    self.apiKey = json["data"].stringValue
+//                    print(self.apiKey)
+//                    self.isCorrect = true
+//                    self.showAlert = false
+//                    self.getToken()
+//                } else {
+//                    self.isCorrect = false
+//                    self.responseMessage = message
+//                    self.showAlert = true
+//                }
+//            }
+//        }.resume()
+//    }
     
     func getToken() {
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
@@ -266,15 +306,15 @@ class Controller : ObservableObject{
         request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
         request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
         
-        
         URLSession.shared.dataTask(with: request) { data, response, error in
-            
             
             if let error = error {
                 print("Error:", error.localizedDescription)
-                self.showAlert = true
-                self.responseMessage = "Error : \(error.localizedDescription)"
-                self.isLoading = false
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
                 return
             }
             
@@ -284,18 +324,15 @@ class Controller : ObservableObject{
             let message = json["message"].stringValue
             print(message)
             print(json["state"])
-            
             DispatchQueue.main.async {
                 self.responseMessage = message
-                if (json["state"] == true){
+                if (json["state"] == true) {
                     self.token = json["data"].stringValue
                     self.isCorrect = true
-                    self.showAlert = false
                     self.getThemes()
-                    self.isLoggedIn = true
-//                    self.getLogin()
                     
-                    //
+                    self.isLoggedIn = true
+                    
                 } else {
                     self.isCorrect = false
                     self.isLoading = false
@@ -305,7 +342,7 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
-    
+  
     func getVersion(context: ModelContext) {
         let apiname = "app/version"
         
@@ -325,15 +362,15 @@ class Controller : ObservableObject{
         request.httpBody = components.query?.data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
-        
         URLSession.shared.dataTask(with: request) { data, response, error in
-            
             
             if let error = error {
                 print("Error:", error.localizedDescription)
-                self.showAlert = true
-                self.responseMessage = "Error : \(error.localizedDescription)"
-                self.isLoading = false
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
                 return
             }
             
@@ -344,15 +381,14 @@ class Controller : ObservableObject{
             print(json)
             print(message)
             print(json["state"])
-            
-            self.themes.removeAll()
-            self.loginSlider.removeAll()
-            self.mainSlider.removeAll()
+             
             DispatchQueue.main.async {
+                self.themes.removeAll()
+                self.loginSlider.removeAll()
+                self.mainSlider.removeAll()
+                
                 self.responseMessage = message
-                if (json["state"] == true){
-                    self.isCorrect = true
-                    self.showAlert = false
+                if (json["state"] == true) {
                     self.isLoading = false
                     let dataObj = json["data"]
                     
@@ -365,7 +401,6 @@ class Controller : ObservableObject{
                         self.isLoading = false
                         self.showAlert = true
                     }
-                    
                      
                 } else {
                     self.responseMessage = message
@@ -377,6 +412,8 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
+
+    
     func getLogin(context: ModelContext) {
          
         let apiname = "auth/login-new-version"
@@ -403,15 +440,15 @@ class Controller : ObservableObject{
         request.httpBody = components.query?.data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
-        
         URLSession.shared.dataTask(with: request) { data, response, error in
-            
             
             if let error = error {
                 print("Error2 :", error.localizedDescription)
-                self.showAlert = true
-                self.responseMessage = "Error : \(error.localizedDescription)"
-                self.isLoading = false
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
                 return
             }
             
@@ -423,14 +460,12 @@ class Controller : ObservableObject{
             print("json : \(json)")
             print("message : \(message)")
             print(json["state"])
-            
             DispatchQueue.main.async {
                 self.responseMessage = message
-                if (json["state"] == true){
+                if (json["state"] == true) {
                     self.isCorrect = true
                     self.showAlert = false
                     self.isLoading = false
-                    
                     
                     let dataObj = json["data"]
                     
@@ -463,6 +498,7 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
+
     
     
     func getChangePassword() {
@@ -553,15 +589,15 @@ class Controller : ObservableObject{
         request.httpBody = components.query?.data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
-        
         URLSession.shared.dataTask(with: request) { data, response, error in
-            
             
             if let error = error {
                 print("Error:", error.localizedDescription)
-                self.showAlert = true
-                self.responseMessage = "Error : \(error.localizedDescription)"
-                self.isLoading = false
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
                 return
             }
             
@@ -573,15 +609,13 @@ class Controller : ObservableObject{
 
             print(message)
             print(json["state"])
-            
-            self.themes.removeAll()
-            self.loginSlider.removeAll()
-            self.mainSlider.removeAll()
             DispatchQueue.main.async {
+                self.themes.removeAll()
+                self.loginSlider.removeAll()
+                self.mainSlider.removeAll()
+                
                 self.responseMessage = message
-                if (json["state"] == true){
-                    self.isCorrect = true
-                    self.showAlert = false
+                if (json["state"] == true) {
                     self.isLoading = false
                     let dataObj = json["data"]
                     
@@ -598,6 +632,7 @@ class Controller : ObservableObject{
                     self.main_bottom_nav_color = dataObj["main_bottom_nav_color"].stringValue
                     self.login_text1_color = dataObj["login_text1_color"].stringValue
                     print("login_logo : \(self.login_logo)")
+                    
                     self.themes.append(Themes(
                         theme_id: self.theme_id,
                         login_body_color: self.login_body_color,
@@ -612,6 +647,7 @@ class Controller : ObservableObject{
                         main_bottom_nav_color: self.main_bottom_nav_color,
                         login_text1_color: self.login_text1_color
                     ))
+                    
                     for (_, subJson):(String, JSON) in dataObj["login_slider_images"] {
                         let imgString = subJson.stringValue
                         print("login_slider_images : \(imgString)")
@@ -638,7 +674,7 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
-    
+
     
     
     func getInpeksiByUser(filter : String, taskid : String, taskdate : String,  tasktype : String) {
@@ -650,8 +686,6 @@ class Controller : ObservableObject{
         request.httpMethod = "POST"
         
         self.isLoading = true
-        
-        self.SecretKeyNoLog = self.generateToken()
         
         print("username : \(self.username)")
          
@@ -671,15 +705,162 @@ class Controller : ObservableObject{
         request.httpBody = components.query?.data(using: .utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         
-        
         URLSession.shared.dataTask(with: request) { data, response, error in
-            
             
             if let error = error {
                 print("Error2 :", error.localizedDescription)
-                self.showAlert = true
-                self.responseMessage = "Error : \(error.localizedDescription)"
-                self.isLoading = false
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+            DispatchQueue.main.async {
+                self.task.removeAll()
+                self.responseMessage = message
+                
+                if (json["state"] == true) {
+                    self.isLoading = false
+                    
+                    for (_, subJson):(String, JSON) in json["data"] {
+                        let task_id = subJson["task_id"].stringValue
+                        let task_description = subJson["task_description"].stringValue
+                        let task_descriptionafter = subJson["task_descriptionafter"].stringValue
+                        let task_type = subJson["task_type"].stringValue
+                        let task_ismonthly = subJson["task_ismonthly"].intValue
+                        let asset_id = subJson["asset_id"].stringValue
+                        let rawDateString = subJson["task_date"].stringValue
+                        let branch_id = subJson["branch_id"].stringValue
+                        
+                        print("task_id \(task_id)")
+                        self.task.append(Task(task_id: task_id, task_date : rawDateString, task_description: task_description, task_descriptionafter: task_descriptionafter, task_type: task_type, task_ismonthly: task_ismonthly, asset_id: asset_id, branch_id: branch_id))
+                    }
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+
+    
+    func getBranchByUser() {
+        let apiname = "branch/branch-user"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+         
+        print("username : \(self.username)")
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "username", value: self.username),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.dataBranch.removeAll()
+                self.responseMessage = message
+                
+                if (json["state"] == true) {
+                    self.isLoading = false
+                    
+                    for (_, subJson):(String, JSON) in json["data"] {
+                        let branch_id = subJson["branch_id"].stringValue
+                        let branch_name = subJson["branch_name"].stringValue
+                        
+                        print("branch_name \(branch_name)")
+                        self.dataBranch.append(DataBranch(branch_id: branch_id, branch_name : branch_name, branch_address: "", branch_telp: "", branch_city: ""))
+                    }
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+
+    
+    func getTaskType() {
+        let apiname = "task/type"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+        
+        print("username : \(self.username)")
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "PARAM", value: "0"),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
                 return
             }
             
@@ -691,44 +872,21 @@ class Controller : ObservableObject{
             print("message : \(message)")
             print(json["state"])
             
-            self.task.removeAll()
-            
             DispatchQueue.main.async {
+                self.tasktype.removeAll()
                 self.responseMessage = message
-                if (json["state"] == true){
-                    self.isCorrect = true
-                    self.showAlert = false
+                
+                if (json["state"] == true) {
                     self.isLoading = false
+                    
                     for (_, subJson):(String, JSON) in json["data"] {
-                        let task_id = subJson["task_id"].stringValue
-                        let task_description = subJson["task_description"].stringValue
-                        let task_descriptionafter = subJson["task_descriptionafter"].stringValue
-                        let task_type = subJson["task_type"].stringValue
-                        let task_ismonthly = subJson["task_ismonthly"].intValue
-                        let asset_id = subJson["asset_id"].stringValue
+                        let tasktype_id = subJson["setting_value"].stringValue
+                        let tasktype_name = subJson["setting_value2"].stringValue
                         
-                        let rawDateString = subJson["task_date"].stringValue
- 
-                        let inputFormatter = DateFormatter()
-                        inputFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
- 
-                        let outputFormatter = DateFormatter()
-                        outputFormatter.dateFormat = "yyyy-MM-dd"
- 
-                        var task_date = rawDateString
-                        if let dateObject = inputFormatter.date(from: rawDateString) {
-                            task_date = outputFormatter.string(from: dateObject)
-                        }
-                        
-                        print("task_id \(task_id)")
-                        self.task.append(Task(task_id: task_id, task_date : task_date, task_description: task_description, task_descriptionafter: task_descriptionafter, task_type: task_type, task_ismonthly: task_ismonthly, asset_id: asset_id))
+                        print("tasktype_name \(tasktype_name)")
+                        self.tasktype.append(TaskType(tasktype_id: tasktype_id, tasktype_name: tasktype_name))
                     }
                     
-                    
-                     
-                    
-                     
-                     
                 } else {
                     self.responseMessage = message
                     print("error : \(self.responseMessage)")
@@ -739,6 +897,272 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
+
+    func getPartType() {
+        let apiname = "task/parttype"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+        
+        print("username : \(self.username)")
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "PARAM", value: "0"),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.parttype.removeAll()
+                self.responseMessage = message
+                
+                if (json["state"] == true) {
+                    self.isLoading = false
+                    
+                    for (_, subJson):(String, JSON) in json["data"] {
+                        let parttype_id = subJson["setting_value"].stringValue
+                        let parttype_name = subJson["setting_value2"].stringValue
+                        
+                        print("parttype_name \(parttype_name)")
+                        self.parttype.append(PartType(parttype_id: parttype_id, parttype_name: parttype_name))
+                    }
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
+    func findAssetbyUser(searchText : String, completion: @escaping (JSON?) -> Void) {
+        let apiname = "asset/scan-byuser-new"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+         
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "barcode", value: searchText),
+            URLQueryItem(name: "username", value: self.username),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                
+                if (json["state"] == true) {
+                    self.isCorrect = true
+                    self.isLoading = false
+                    completion(json)
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
+    func getBranchAll() {
+        let apiname = "branch/show"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+         
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "branch_id", value: ""),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.dataBranch.removeAll()
+                self.responseMessage = message
+                
+                if (json["state"] == true) {
+                    self.isCorrect = true
+                    self.isLoading = false
+                    
+                    for (_, subJson):(String, JSON) in json["data"] {
+                        let branch_id = subJson["branch_id"].stringValue
+                        let branch_name = subJson["setting_value2"].stringValue
+                        
+                        print("branch_name \(branch_name)")
+                        self.dataBranch.append(DataBranch(branch_id: branch_id, branch_name: branch_name, branch_address: "", branch_telp: "", branch_city: ""))
+                    }
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
+    func getBranchbyID(branch_id : String, completion: @escaping (JSON?) -> Void) {
+        let apiname = "branch/show"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+        
+        print("branch_id : \(branch_id)")
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "branch_id", value: branch_id),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                
+                if (json["state"] == true) {
+                    self.isCorrect = true
+                    self.isLoading = false
+                    completion(json) 
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+
     
     
     func getbranch() {
@@ -951,7 +1375,6 @@ class Controller : ObservableObject{
     
     
 
-    
     
 }
 

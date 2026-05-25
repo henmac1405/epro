@@ -15,109 +15,113 @@ struct HomeView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            // scroll start
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 0) {
-                    ZStack(alignment: .bottom) {
-                        AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_background_image)) { phase in
-                            if let image = phase.image {
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 200)
-                                    .clipped()
-                                     
-                            } else {
-                                // Kontainer kosong transparan saat gambar sedang di-load
-                                Color.clear
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 200)
-                                    .clipped()
-                            }
-                        }
-                    }
-                    
-                    
-                    
+            VStack{
+                // scroll start
+                
+                ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        Text(self.controller.user_fullname)
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.top, 10)
-                            .padding(.bottom, 5)
-                        Text(self.controller.branch_name)
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.top, 5)
-                            .padding(.bottom, 20)
-                        
-                        
-                        VStack(spacing: 24) {
-                            AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_image_header)) { phase in
+                        ZStack(alignment: .bottom) {
+                            AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_background_image)) { phase in
                                 if let image = phase.image {
                                     image
                                         .resizable()
                                         .scaledToFill()
                                         .frame(maxWidth: .infinity)
-                                        .frame(height: 220)
-                                        .cornerRadius(16)
-                                        .padding(.horizontal, 16)
-                                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                        .frame(height: 200)
+                                        .clipped()
+                                    
+                                } else {
+                                    // Kontainer kosong transparan saat gambar sedang di-load
+                                    Color.clear
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 200)
+                                        .clipped()
                                 }
-                            }
-                            
-                            if controller.pageName == "HOME"{
-                                MenuView()
-                            } else if controller.pageName == "INPEKSI" {
-                                InpeksiView()
-                            } else if controller.pageName == "CEKLIST BULANAN" {
-                                CeklistBulananView()
-                            } else if controller.pageName == "VERIFIKASI ASSET" {
-                                VerifyAssetView()
-                            } else if controller.pageName ==  "ASSET HISTORY"{
-                                AssetHistoryView()
-                            } else if controller.pageName == "USER" {
-                                UserView()
                             }
                         }
                         
+                        
+                        
+                        VStack(spacing: 0) {
+                            Text(self.controller.user_fullname)
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.top, 10)
+                                .padding(.bottom, 5)
+                            Text(self.controller.branch_name)
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.top, 5)
+                                .padding(.bottom, 20)
+                            
+                            
+                            VStack(spacing: 24) {
+                                AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_image_header)) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(maxWidth: .infinity)
+                                            .frame(height: 220)
+                                            .cornerRadius(16)
+                                            .padding(.horizontal, 16)
+                                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                    }
+                                }
+                                
+                                if controller.pageName == "HOME"{
+                                    MenuView()
+                                } else if controller.pageName == "INPEKSI" {
+                                    InpeksiView()
+                                } else if controller.pageName == "CEKLIST BULANAN" {
+                                    CeklistBulananView()
+                                } else if controller.pageName == "VERIFIKASI ASSET" {
+                                    VerifyAssetView()
+                                } else if controller.pageName ==  "ASSET HISTORY"{
+                                    AssetHistoryView()
+                                } else if controller.pageName == "USER" {
+                                    UserView()
+                                } else if controller.pageName == "INPUT INPEKSI" {
+                                    InpeksiInputView()
+                                }
+                            }
+                            
+                        }
+                        .padding(.top, -150)
+                        .padding(.bottom, 100)
+                         
+                        
                     }
-                    .padding(.top, -200)
-                    .padding(.bottom, 80)
-                    
-                    Spacer().frame(height: 140)
-                    
                 }
-            }
-            // scroll end
-            VStack {
-                Spacer()
-                HStack(spacing: 0) {
-                    BottomTabItem(icon: "house", title: "HOME", isSelected: selectedTab == "HOME") {
-                        selectedTab = "HOME"
-                        controller.pageName = "HOME"
+                // scroll end
+                
+                VStack {
+                    HStack(spacing: 0) {
+                        BottomTabItem(icon: "house", title: "HOME", isSelected: selectedTab == "HOME") {
+                            selectedTab = "HOME"
+                            controller.pageName = "HOME"
+                        }
+                        BottomTabItem(icon: "list.clipboard.fill", title: "INPEKSI", isSelected: selectedTab == "INPEKSI")
+                        {
+                            selectedTab = "INPEKSI"
+                            controller.pageName = "INPEKSI"
+                        }
+                        BottomTabItem(icon: "person.fill", title: "USER", isSelected: selectedTab == "USER")
+                        {
+                            selectedTab = "USER"
+                            controller.pageName = "USER"
+                        }
+                        
+                        BottomTabItem(icon: "arrow.right.isActive", title: "LOGOUT", isSelected: selectedTab == "LOGOUT") {
+                            showLogoutAlert = true
+                        }
                     }
-                    BottomTabItem(icon: "list.clipboard.fill", title: "INPEKSI", isSelected: selectedTab == "INPEKSI")
-                    {
-                        selectedTab = "INPEKSI"
-                        controller.pageName = "INPEKSI"
-                    }
-                    BottomTabItem(icon: "person.fill", title: "USER", isSelected: selectedTab == "USER")
-                    {
-                        selectedTab = "USER"
-                        controller.pageName = "USER"
-                    }
-                    
-                    BottomTabItem(icon: "arrow.right.isActive", title: "LOGOUT", isSelected: selectedTab == "LOGOUT") {
-                        showLogoutAlert = true
-                    }
+                    .padding(.vertical, 12)
+                    .background(Color.fromRGBAString(self.controller.main_menu_color))
+                    .cornerRadius(32)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 12)
                 }
-                .padding(.vertical, 12)
-                .background(Color.fromRGBAString(self.controller.main_menu_color))
-                .cornerRadius(32)
-                .padding(.horizontal, 8)
-                .padding(.bottom, 12)
             }
         }
         // ALERT DIALOG KONFIRMASI LOGOUT
@@ -132,7 +136,12 @@ struct HomeView: View {
         .onAppear() {
             controller.pageName = "HOME"
             loadConfigOld()
+            self.controller.getBranchByUser()
+            self.controller.getTaskType()
+            self.controller.getPartType()
         }
+        .ignoresSafeArea(edges: .top)
+        
     }
     
     // Fungsi Eksekusi Aksi Tombol Keluar

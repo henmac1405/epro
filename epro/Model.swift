@@ -20,6 +20,37 @@ struct DataBranch : Codable {
     var branch_city: String
 }
 
+struct TaskType : Codable {
+    var tasktype_id: String
+    var tasktype_name: String
+}
+
+struct PartType : Codable {
+    var parttype_id: String
+    var parttype_name: String
+}
+
+struct SparepartItem: Identifiable {
+    let id = UUID()
+    var taskpart_name: String
+    var taskpart_qty: Int
+    var taskpart_type: String
+    var taskpart_descr: String
+}
+
+struct AssetFind : Codable {
+    var asset_id: String
+    var asset_capacity: String
+    var asset_location: String
+    var asset_image: String
+    var asset_isdaily: Int
+    var asset_ismonthly: Int
+    var brand_name: String
+    var branch_id: String
+    var vendor_name: String
+    var kode_barcode: String
+}
+
 struct Themes : Codable {
     var theme_id: Int
     var login_body_color: String
@@ -53,6 +84,7 @@ struct Task : Codable {
     var task_type : String
     var task_ismonthly : Int
     var asset_id : String
+    var branch_id : String
 }
 
 struct AssetItem: Identifiable, Decodable {
