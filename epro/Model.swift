@@ -54,3 +54,19 @@ struct Task : Codable {
     var task_ismonthly : Int
     var asset_id : String
 }
+
+struct AssetItem: Identifiable, Decodable {
+    var id = UUID()
+    var asset_id: String
+    var asset_name: String
+    var asset_location: String
+    var scheduletaskdetil_cycle: String
+    var curr_periode_start: String
+    var curr_status: String
+}
+
+struct DataBranchUser: Codable {
+    var branch_id: String
+    var branch_name: String
+}
+

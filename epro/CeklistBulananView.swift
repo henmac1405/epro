@@ -3,6 +3,9 @@ import SwiftUI
 struct CeklistBulananView: View {
     @EnvironmentObject var controller: Controller
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedBranchID: String = ""
+    @State private var selectedBranchName: String = "Pilih Cabang"
+    
      
     @State private var selectedLocation: String = ""
     @State private var selectedDate: Date = Date()
@@ -19,11 +22,17 @@ struct CeklistBulananView: View {
     @State private var filtertask_id = ""
     
     @State private var assetsList: [AssetItem] = []
-     
+
     @State private var primaryPurple = Color(red: 0.53, green: 0.00, blue: 0.56)
     let lightGrayBG = Color(red: 0.95, green: 0.94, blue: 0.96)
     let segmentUnselectedBG = Color(red: 0.88, green: 0.87, blue: 0.89)
     let headerTextGray = Color(red: 0.90, green: 0.90, blue: 0.92)
+    
+    
+    @State private var showDatePicker = false
+    @State private var tempSelectedDate = Date()   // untuk popup
+
+    
     
     var body: some View {
         ZStack {
@@ -31,8 +40,17 @@ struct CeklistBulananView: View {
             VStack(spacing: 16) {
                  
                 Menu {
-                    Button("Cibubur Mall", action: { selectedLocation = "Cibubur Mall" })
-                    Button("Bekasi Mall", action: { selectedLocation = "Bekasi Mall" })
+                    ForEach(controller.dataBranchuser, id: \.branch_id) { branch in
+                           Button(branch.branch_name) {
+                               selectedLocation = branch.branch_name
+                               selectedBranchID = branch.branch_id   // simpan id untuk API berikutnya
+                               controller.getCeklistbulanan(
+                                branchID: branch.branch_id,
+                                taskDate: dateToString(tempSelectedDate),
+                                buttoncek:0
+                               )
+                           }
+                       }
                 } label: {
                     HStack {
                         Text(selectedLocation.isEmpty ? "Pilih Lokasi/Store" : selectedLocation)
@@ -43,6 +61,7 @@ struct CeklistBulananView: View {
                             .font(.system(size: 14))
                             .foregroundColor(.gray)
                     }
+                   
                     .padding(.horizontal, 16)
                     .frame(height: 54)
                     .background(Color.white)
@@ -54,8 +73,14 @@ struct CeklistBulananView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
-                 
+                .onAppear {
+                    controller.getbranch()
+                }
+                
+
+             
                 HStack {
+
                     Button(action: {
                         self.showCalendar = true
                     }){
@@ -89,6 +114,41 @@ struct CeklistBulananView: View {
                 .background(lightGrayBG)
                 .cornerRadius(10)
                 .padding(.horizontal, 16)
+                .sheet(isPresented: $showDatePicker) {
+                    VStack {
+                        DatePicker(
+                            "Select Date",
+                            selection: $tempSelectedDate,
+                            displayedComponents: .date
+                        )
+                        .datePickerStyle(.graphical)
+                        .padding()
+
+                        HStack {
+                            Button("Cancel") {
+                                showDatePicker = false
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+
+                            Button("OK") {
+                                selectedDate = tempSelectedDate
+                                showDatePicker = false
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .presentationDetents([.medium]) // optional
+                }
+                
+                .onTapGesture {
+                    tempSelectedDate = selectedDate
+                    showDatePicker = true
+                }
+                
+                
+                
                  
                 HStack(spacing: 12) {
                     HStack(spacing: 0) {
@@ -166,23 +226,51 @@ struct CeklistBulananView: View {
                      
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
-                            ForEach(assetsList) { item in
+                            ForEach(controller.assetsList) { item in
+                               
                                 HStack(spacing: 0) {
                                     Image(systemName: "qrcode")
                                         .font(.system(size: 22, weight: .medium))
                                         .foregroundColor(primaryPurple)
                                         .frame(width: 60, alignment: .leading)
                                      
-                                    Text(item.id)
+                                    Text(item.asset_id)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
                                         .frame(width: 90, alignment: .leading)
                                      
-                                    Text(item.name)
+                                    Text(item.asset_name)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .lineLimit(1)
+                                    Text(item.asset_location)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.black.opacity(0.8))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .lineLimit(1)
+                                    
+                                    Text(item.scheduletaskdetil_cycle)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.black.opacity(0.8))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .lineLimit(1)
+                                    
+                                    Text(item.curr_periode_start)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.black.opacity(0.8))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .lineLimit(1)
+                                    
+                                    Text(item.curr_status)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.black.opacity(0.8))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .lineLimit(1)
+                                    
+                                    
+
+                                    
                                 }
                                 .padding(.vertical, 16)
                                 .padding(.horizontal, 16)
@@ -220,6 +308,7 @@ struct CeklistBulananView: View {
             
         }
         .onAppear() {
+
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
@@ -229,7 +318,8 @@ struct CeklistBulananView: View {
 }
 
  
-struct AssetItem: Identifiable {
-    let id: String
-    let name: String
+func dateToString(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: date)
 }
