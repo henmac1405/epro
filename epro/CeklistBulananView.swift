@@ -12,12 +12,16 @@ struct CeklistBulananView: View {
     @State private var isSudahDicek: Bool = false
     @State private var selectedRowsLimit: Int = 5
     @State private var currentPage: Int = 1
-    @State private var totalPages: Int = 303
+    @State private var totalPages: Int = 2
     @State private var selectedTab: String = "INPEKSI"
     @State private var showLogoutAlert: Bool = false
-     
- 
-
+    
+    @State private var task_date = ""
+    @State private var showCalendar = false
+    @State private var showDate = Date()
+    @State private var filtertask_id = ""
+    
+    @State private var assetsList: [AssetItem] = []
 
     @State private var primaryPurple = Color(red: 0.53, green: 0.00, blue: 0.56)
     let lightGrayBG = Color(red: 0.95, green: 0.94, blue: 0.96)
@@ -32,8 +36,6 @@ struct CeklistBulananView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.95, green: 0.95, blue: 0.96)
-                .ignoresSafeArea()
              
             VStack(spacing: 16) {
                  
@@ -78,20 +80,39 @@ struct CeklistBulananView: View {
 
              
                 HStack {
-                    Image(systemName: "calendar")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 18))
-                    
-                    Text(dateToString(selectedDate))
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
-                    
-                    Spacer()
+
+                    Button(action: {
+                        self.showCalendar = true
+                    }){
+                        Image(systemName: "calendar")
+                            .foregroundColor(.gray)
+                        Text(task_date)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.black)
+                        Spacer()
+                    }
+                    .sheet(isPresented: $showCalendar) {
+                        VStack {
+                            DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
+                                .datePickerStyle(.graphical)
+                                .padding()
+                            Button("Selesai")
+                            {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-MM-dd"
+                                self.task_date = formatter.string(from: self.showDate)
+                                
+                                showCalendar = false
+                            }
+                            .padding()
+                        }
+                        .presentationDetents([.medium])
+                    }
                 }
                 .padding(.horizontal, 16)
-                .frame(height: 54)
-                .background(Color.white)
-                .cornerRadius(12)
+                .frame(height: 48)
+                .background(lightGrayBG)
+                .cornerRadius(10)
                 .padding(.horizontal, 16)
                 .sheet(isPresented: $showDatePicker) {
                     VStack {
@@ -194,12 +215,12 @@ struct CeklistBulananView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("Status")
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        
                     }
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(headerTextGray)
+                    .foregroundColor(.white)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
+                    .background(Color.fromRGBAString(self.controller.main_table_col_color))
                     
                     Divider()
                      
@@ -287,8 +308,11 @@ struct CeklistBulananView: View {
             
         }
         .onAppear() {
-           
-           primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
+
+            primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            self.task_date = formatter.string(from: Date())
         }
     }
 }

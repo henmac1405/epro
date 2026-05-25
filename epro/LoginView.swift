@@ -3,14 +3,14 @@ import SwiftData
 
 struct LoginView: View {
     @EnvironmentObject var controller : Controller
-    @State private var username: String = "liyanto"
+    @State private var username: String = "userdev"
     @State private var password: String = "rahasia123"
     
     @Environment(\.modelContext) private var modelContext
     @Query private var configs: [AppConfig]
     
     let menuColorString = "170,4,181,0"
-    @State private var secretKey = ""
+    @State private var secretKey = "" // hendra
     
     var body: some View {
         ZStack {
@@ -19,8 +19,7 @@ struct LoginView: View {
                     .frame(maxWidth: .infinity, maxHeight: UIScreen.main.bounds.height * 0.45)
                 Color.fromRGBAString(self.controller.login_body_color)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .ignoresSafeArea(edges: .top)
+            } 
              
             VStack {
                 Spacer()
@@ -134,8 +133,16 @@ struct LoginView: View {
             }
         }
         .onAppear() {
+            
             loadConfig()
-            self.controller.getThemes()
+            print("bussinessunit_id \(self.controller.bussinessunit_id)")
+            print("bussinessunit_id_old \(self.controller.bussinessunit_id_old)")
+            if self.controller.bussinessunit_id == self.controller.bussinessunit_id_old {
+                print("Old Themes")
+            } else {
+                self.controller.getThemes()
+            }
+            
         }
     }
     
