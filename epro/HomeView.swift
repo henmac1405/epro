@@ -54,36 +54,46 @@ struct HomeView: View {
                                 .padding(.top, 5)
                                 .padding(.bottom, 20)
                             
-                            
                             VStack(spacing: 24) {
                                 AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_image_header)) { phase in
-                                    if let image = phase.image {
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(maxWidth: .infinity)
-                                            .frame(height: 220)
-                                            .cornerRadius(16)
-                                            .padding(.horizontal, 16)
-                                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                                    }
-                                }
+                                            if let image = phase.image {
+                                                image
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(maxWidth: .infinity)
+                                                    .frame(height: 220)
+                                                    .cornerRadius(16)
+                                                    .padding(.horizontal, 16)
+                                                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                            } else {
+                                                // Sediakan placeholder agar layout tidak melompat-lompat saat loading
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(Color.gray.opacity(0.1))
+                                                    .frame(height: 220)
+                                                    .padding(.horizontal, 16)
+                                            }
+                                        }
                                 
-                                if controller.pageName == "HOME"{
-                                    MenuView()
-                                } else if controller.pageName == "INPEKSI" {
-                                    InpeksiView()
-                                } else if controller.pageName == "CEKLIST BULANAN" {
-                                    CeklistBulananView()
-                                } else if controller.pageName == "VERIFIKASI ASSET" {
-                                    VerifyAssetView()
-                                } else if controller.pageName ==  "ASSET HISTORY"{
-                                    AssetHistoryView()
-                                } else if controller.pageName == "USER" {
-                                    UserView()
-                                } else if controller.pageName == "INPUT INPEKSI" {
-                                    InpeksiInputView()
-                                }
+                                switch controller.pageName {
+                                        case "HOME":
+                                            MenuView()
+                                        case "INPEKSI":
+                                            InpeksiView()
+                                        case "CEKLIST BULANAN":
+                                            CeklistBulananView()
+                                        case "VERIFIKASI ASSET":
+                                            VerifyAssetView()
+                                        case "ASSET HISTORY":
+                                            AssetHistoryView()
+                                        case "USER":
+                                            UserView()
+                                        case "INPUT INPEKSI":
+                                            // Berikan id unik agar siklus hidup (lifecycle) View Input Foto terisolasi dengan aman
+                                            InpeksiInputView()
+                                                .id("input-inpeksi-view-stable")
+                                        default:
+                                            EmptyView()
+                                        }
                             }
                             
                         }
