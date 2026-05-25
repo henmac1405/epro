@@ -9,7 +9,6 @@ struct InpeksiView: View {
     @State private var selectedTab: String = "INPEKSI"
     @State private var showLogoutAlert: Bool = false
     @State private var currentPage: Int = 1
-    @State private var totalPages: Int = 2
     @State private var task_date = "Semua Tanggal"
     @State private var showCalendar = false
     @State private var showDate = Date()
@@ -52,6 +51,22 @@ struct InpeksiView: View {
         }
     }
 
+
+      
+    @State private var itemsPerPage = 5
+    
+    var totalPages: Int {
+        let count = filteredTasks.count
+        return count > 0 ? Int(ceil(Double(count) / Double(itemsPerPage))) : 1
+    }
+ 
+    var tasksOnCurrentPage: [Task] {
+        let startIndex = (currentPage - 1) * itemsPerPage
+        let endIndex = min(startIndex + itemsPerPage, filteredTasks.count)
+        
+        guard startIndex < filteredTasks.count else { return [] }
+        return Array(filteredTasks[startIndex..<endIndex])
+    }
 
     
     var body: some View {
@@ -136,9 +151,16 @@ struct InpeksiView: View {
                     .cornerRadius(10)
                     
                     Menu {
-                        Button("5", action: { selectedRowsLimit = 5 })
-                        Button("10", action: { selectedRowsLimit = 10 })
-                        Button("20", action: { selectedRowsLimit = 20 })
+                        Button("5", action: {
+                            itemsPerPage = 5
+                            selectedRowsLimit = 5
+                        })
+                        Button("10", action: {
+                            itemsPerPage = 10
+                            selectedRowsLimit = 10})
+                        Button("20", action: {
+                            itemsPerPage = 20
+                            selectedRowsLimit = 20 })
                     } label: {
                         HStack {
                             Text("\(selectedRowsLimit)")
@@ -253,7 +275,7 @@ struct InpeksiView: View {
                             //Detil Table
                             
                             VStack(spacing: 0) {
-                                ForEach(self.filteredTasks, id: \.task_id) { item in
+                                ForEach(self.tasksOnCurrentPage, id: \.task_id) { item in
                                     HStack(spacing: 0) {
                                         // Kolom 1: ID
                                         Text(item.task_id)

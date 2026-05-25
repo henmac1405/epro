@@ -635,18 +635,23 @@ struct InpeksiInputView: View {
         }
         // MODAL POPUP TAMBAH SPAREPART ITEM
         .sheet(isPresented: $showTambahSparepart, onDismiss: {
+            // Reset state item edit saat modal ditutup agar kembali ke mode tambah baru
             self.sparepartYangSedangDiedit = nil
         }) {
+            // Kirim state item yang sedang aktif diedit ke dalam popup
             TambahSparepartPopupView(editItem: self.sparepartYangSedangDiedit) { item, qty, type, desc in
                 withAnimation {
+                    //let satuandesc = "Tipe: \(satuan)"
                     
                     if let itemLama = self.sparepartYangSedangDiedit,
                        let index = self.sparepartList.firstIndex(where: { $0.id == itemLama.id }) {
+                        // MODE EDIT: Perbarui baris data lama yang berada di dalam array [[^15]]
                         self.sparepartList[index].taskpart_name = item
                         self.sparepartList[index].taskpart_qty = qty
                         self.sparepartList[index].taskpart_type = type
                         self.sparepartList[index].taskpart_descr = desc
                     } else {
+                        // MODE TAMBAH BARU: Tambah baris baru seperti biasa [[^15]]
                         let newSparepart = SparepartItem(taskpart_name: item, taskpart_qty: qty, taskpart_type: type, taskpart_descr: desc)
                         self.sparepartList.append(newSparepart)
                     }
@@ -681,6 +686,25 @@ struct InpeksiInputView: View {
                         print("asset_image : \(asset_image)")
                         // FIND BRANCH BY ID
                         selectedBranch = self.controller.filterBranch(branchid: selectedBranchID)
+//                        self.controller.getBranchbyID(branch_id: selectedBranchID) { json in
+//                            DispatchQueue.main.async {
+//                                if let data = json {
+//                                    if data["state"] == true {
+//                                        print("getBranchbyID : ")
+//                                        print(data["data"][0]["branch_name"])
+//                                        selectedBranch = data["data"][0]["branch_name"].stringValue
+//                                        
+//                                    } else{
+//                                        self.controller.showAlert = true
+//                                        self.controller.responseMessage = data["message"].stringValue
+//                                    }
+//                                } else {
+//                                    self.controller.showAlert = true
+//                                    self.controller.responseMessage = "Gagal Load Data Branch"
+//                                    
+//                                }
+//                            }
+//                        }
                         
                     } else{
                         self.controller.showAlert = true
