@@ -53,8 +53,8 @@ class Controller : ObservableObject{
     @Published var region_id = ""
     @Published var branch_id = ""
     @Published var branch_name = ""
-    
-    
+    @Published var user_changepassword = ""
+    @Published var user_changepasswordbaru = ""
     
     //Model
     @Published var dataUser : [DataUser] = []
@@ -68,6 +68,10 @@ class Controller : ObservableObject{
     
     @Published var tasktype : [TaskType] = []
     @Published var parttype : [PartType] = []
+
+    @Published var assetsList: [AssetItem] = []
+    @Published var dataBranchuser : [DataBranchUser] = []
+
     
     @Published var selectedTaskForEdit: Task? = nil
     
@@ -338,7 +342,7 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
-
+  
     func getVersion(context: ModelContext) {
         let apiname = "app/version"
         
@@ -451,6 +455,7 @@ class Controller : ObservableObject{
             guard let data = data else { return }
             
             let json = JSON(data)
+            
             let message = json["message"].stringValue
             print("json : \(json)")
             print("message : \(message)")
@@ -495,9 +500,10 @@ class Controller : ObservableObject{
     }
 
     
-    func getThemes() {
+    
+    func getChangePassword() {
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
-        let apiname = "apptheme/theme"
+        let apiname = "auth/change-password"
         
         guard let url = URL(string: self.url_api + apiname) else { return }
         print(url)
@@ -507,6 +513,74 @@ class Controller : ObservableObject{
         request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
         request.setValue(self.token, forHTTPHeaderField: "TOKEN")
         request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+   
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "username", value: self.username),
+            URLQueryItem(name: "password", value: self.user_changepassword),
+            URLQueryItem(name: "newpassword", value: self.user_changepasswordbaru),
+        ]
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+  
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            
+            if let error = error {
+                print("Error:", error.localizedDescription)
+                self.showAlert = true
+                self.responseMessage = "Error : \(error.localizedDescription)"
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print(json)
+
+            print(message)
+            print(json["state"])
+            
+            
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                if (json["state"] == true){
+                   
+                    self.showAlert = true
+                    self.responseMessage = message
+                    self.user_password = self.user_changepasswordbaru
+                    
+           
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
+    
+    
+    func getThemes() {
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        let apiname = "apptheme/theme"
+        
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        print("tutup")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+   
         
         var components = URLComponents()
         components.queryItems = [
@@ -532,6 +606,7 @@ class Controller : ObservableObject{
             let json = JSON(data)
             let message = json["message"].stringValue
             print(json)
+
             print(message)
             print(json["state"])
             DispatchQueue.main.async {
@@ -1088,6 +1163,219 @@ class Controller : ObservableObject{
         }.resume()
     }
 
+    
+    
+    func getbranch() {
+        
+        print("cobaaaa")
+
+            let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+            let apiname = "monthlyschedule/getuserbranch"
+
+            guard let url = URL(string: self.url_api + apiname) else { return }
+
+            print(url)
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+
+            request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+            request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+            request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+
+            var components = URLComponents()
+
+            components.queryItems = [
+                URLQueryItem(name: "username", value: self.username),
+            ]
+
+            request.httpBody = components.query?.data(using: .utf8)
+
+            request.setValue(
+                "application/x-www-form-urlencoded",
+                forHTTPHeaderField: "Content-Type"
+            )
+
+            URLSession.shared.dataTask(with: request) { data, response, error in
+
+                if let error = error {
+                    DispatchQueue.main.async {
+                        print("Error2 :", error.localizedDescription)
+                        self.showAlert = true
+                        self.responseMessage = "Error : \(error.localizedDescription)"
+                        self.isLoading = false
+                    }
+                    return
+                }
+                
+                guard let data = data else { return }
+                
+                let json = JSON(data)
+                let message = json["message"].stringValue
+                print("json : \(json)")
+                print("message : \(message)")
+                print(json["state"])
+                
+                
+
+                DispatchQueue.main.async {
+                    self.dataBranchuser.removeAll()
+                    self.responseMessage = message
+                    if (json["state"] == true){
+                        self.isCorrect = true
+                        self.showAlert = false
+                        self.isLoading = false
+                        for (_, subJson):(String, JSON) in json["data"] {
+                            let branch_id = subJson["branch_id"].stringValue
+                            let branch_name = subJson["branch_name"].stringValue
+                          
+                            print("branch_id \(branch_name)")
+                            self.dataBranchuser.append(DataBranchUser(branch_id: branch_id, branch_name : branch_name))
+                        }
+                         
+                        
+                         
+                         
+                    } else {
+                        self.responseMessage = message
+                        print("error : \(self.responseMessage)")
+                        self.isCorrect = false
+                        self.isLoading = false
+                        self.showAlert = true
+                    }
+                }
+
+            }.resume()
+        }
+    
+    
+    
+    
+    func getCeklistbulanan(branchID: String, taskDate: String,buttoncek: Int32) {
+
+            let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+            let apiname = "monthlyschedule/show"
+
+            guard let url = URL(string: self.url_api + apiname) else { return }
+
+            print(url)
+
+        
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+
+            request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+            request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+            request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+
+            var components = URLComponents()
+
+            components.queryItems = [
+                URLQueryItem(name: "username", value: self.username),
+                URLQueryItem(name: "task_date", value: taskDate),
+                URLQueryItem(name: "branch_id", value: branchID),
+                URLQueryItem(name: "buttoncek", value: String(buttoncek))
+                
+            ]
+        
+
+
+            request.httpBody = components.query?.data(using: .utf8)
+
+            request.setValue(
+                "application/x-www-form-urlencoded",
+                forHTTPHeaderField: "Content-Type"
+            )
+
+            URLSession.shared.dataTask(with: request) { data, response, error in
+
+                if let error = error {
+                    DispatchQueue.main.async {
+                        print("Error2 :", error.localizedDescription)
+                        self.showAlert = true
+                        self.responseMessage = "Error : \(error.localizedDescription)"
+                        self.isLoading = false
+                    }
+                    return
+                }
+                
+                guard let data = data else { return }
+                
+                let json = JSON(data)
+                let message = json["message"].stringValue
+                print("json : \(json)")
+                print("message : \(message)")
+                print(json["state"])
+                
+                
+                DispatchQueue.main.async {
+                    self.assetsList.removeAll()
+                    
+                    self.responseMessage = message
+                    if (json["state"] == true){
+                        self.isCorrect = true
+                        self.showAlert = false
+                        self.isLoading = false
+                        for (_, subJson):(String, JSON) in json["data"] {
+                            let asset_id = subJson["asset_id"].stringValue
+                            let asset_name = subJson["asset_name"].stringValue
+                            let asset_location = subJson["asset_location"].stringValue
+                            let scheduletaskdetil_cycle = subJson["scheduletaskdetil_cycle"].stringValue
+                            let curr_periode_start = subJson["curr_periode_start"].stringValue
+                            let curr_status = subJson["curr_status"].stringValue
+                              
+                              
+                            self.assetsList.append(AssetItem(asset_id: asset_id,
+                                                             asset_name : asset_name,
+                                                             asset_location : asset_location,
+                                                             scheduletaskdetil_cycle : scheduletaskdetil_cycle,
+                                                             curr_periode_start : curr_periode_start,
+                                                             curr_status : curr_status
+                                                            ))
+                        }
+                         
+                        
+                         
+                         
+                    } else {
+                        self.responseMessage = message
+                        print("error : \(self.responseMessage)")
+                        self.isCorrect = false
+                        self.isLoading = false
+                        self.showAlert = true
+                    }
+                }
+                
+                
+                
+                
+//                do {
+//
+//                    // kalau response langsung array
+//                    let result = try JSONDecoder().decode([AssetItem].self, from: data)
+//
+//                    DispatchQueue.main.async {
+//                        self.assetsList = result
+//                    }
+//
+//                } catch {
+//
+//                    print("DECODE ERROR :", error)
+//
+//                    if let jsonString = String(data: data, encoding: .utf8) {
+//                        print(jsonString)
+//                    }
+//                }
+
+            }.resume()
+        }
+    
+    
+    
+    
+    
+
+    
 }
 
 extension String {
@@ -1097,3 +1385,6 @@ extension String {
         return digest.map { String(format: "%02hhx", $0) }.joined()
     }
 }
+
+
+
