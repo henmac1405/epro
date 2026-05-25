@@ -17,9 +17,42 @@ struct InpeksiView: View {
     @State private var filtertask_date = ""
     @State private var filtertask_descr = ""
     @State private var filtertask_type = ""
+    @FocusState private var isSearchFieldFocused: Bool
     
     @State private var primaryPurple = Color(red: 0.53, green: 0.00, blue: 0.56)
     let lightGrayBG = Color(red: 0.96, green: 0.95, blue: 0.97)
+    
+    
+    
+    // Fungsi Penyaringan Data Otomatis (Computed Property)
+    var filteredTasks: [Task] {
+        let allTasks = controller.task
+        
+        // Jika kolom pencarian teks dan filter tanggal kosong, langsung tampilkan semua data murni
+        if searchText.isEmpty && filtertask_date.isEmpty {
+            return allTasks
+        }
+        
+        return allTasks.filter { item in
+            // 1. SENSOR TEKS (Memeriksa 4 Kolom Sekaligus dengan Logika OR)
+            let kataKunci = searchText.lowercased()
+            let cocokTeks = !searchText.isEmpty && (
+                item.task_description.lowercased().contains(kataKunci) ||
+                item.task_id.lowercased().contains(kataKunci) ||
+                item.task_type.lowercased().contains(kataKunci) ||
+                item.asset_id.lowercased().contains(kataKunci)
+            )
+            
+            // 2. SENSOR TANGGAL
+            let cocokTanggal = !filtertask_date.isEmpty &&
+                item.task_date.contains(filtertask_date)
+            
+            // GABUNGAN OR UTAMA: Lolos jika cocok salah satu teks kriteria ATAU cocok tanggalnya
+            return cocokTeks || cocokTanggal
+        }
+    }
+
+
     
     var body: some View {
         ZStack() {
@@ -88,6 +121,14 @@ struct InpeksiView: View {
                             .autocapitalization(.none)
                             .autocorrectionDisabled(true)
                             .textInputAutocapitalization(.never)
+                            .focused($isSearchFieldFocused)
+//                            .onChange(of: searchText) { oldValue, newValue in
+//                                     
+//                                    if newValue.count >= 3 {
+//                                        self.controller.getInpeksiByUser(filter: newValue, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
+//                                    }
+//                                }
+                        
                     }
                     .padding(.leading, 8)
                     .frame(height: 48)
@@ -137,7 +178,7 @@ struct InpeksiView: View {
                         filtertask_date = ""
                         filtertask_type = ""
                         selectedRowsLimit = 5
-                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
+//                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
                     }) {
                         HStack {
                             Image(systemName: "arrow.counterclockwise")
@@ -157,7 +198,9 @@ struct InpeksiView: View {
                 }
                 .padding(.horizontal, 16)
                 
-                Button(action: { print("Membuka form Input Inspeksi") }) {
+                Button(action: {
+                    self.controller.pageName = "INPUT INPEKSI"
+                }) {
                     HStack {
                         Text("+")
                             .font(.system(size: 20, weight: .medium))
@@ -174,7 +217,7 @@ struct InpeksiView: View {
                 .padding(.top, 4)
                 
                 if self.controller.isLoading == false {
-                    if self.controller.task.count == 0 {
+                    if self.filteredTasks.count == 0 {
                         HStack {
                             Spacer()
                             Text("Tidak ada data")
@@ -210,7 +253,7 @@ struct InpeksiView: View {
                             //Detil Table
                             
                             VStack(spacing: 0) {
-                                ForEach(self.controller.task, id: \.task_id) { item in
+                                ForEach(self.filteredTasks, id: \.task_id) { item in
                                     HStack(spacing: 0) {
                                         // Kolom 1: ID
                                         Text(item.task_id)
@@ -230,9 +273,11 @@ struct InpeksiView: View {
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                         
-                                        // Kolom 4: Aksi
+                                        // Kolom 4: Aksi Edit
                                         Button(action: {
                                             print("Mengedit item: \(item.task_description)")
+                                            self.controller.selectedTaskForEdit = item
+                                            self.controller.pageName = "INPUT INPEKSI"
                                         }) {
                                             Image(systemName: "pencil")
                                                 .font(.system(size: 20, weight: .bold))
@@ -240,6 +285,7 @@ struct InpeksiView: View {
                                                 .frame(width: 60, alignment: .trailing)
                                         }
                                         .buttonStyle(PlainButtonStyle())
+
                                     }
                                     .padding(.horizontal, 24)
                                     .padding(.vertical, 20)
@@ -297,6 +343,8 @@ struct InpeksiView: View {
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
             
         }
+        .ignoresSafeArea(edges: .top)
+        .padding(.bottom, -100)
         
         
         
