@@ -274,6 +274,8 @@ struct InpeksiView: View {
                             
                             //Detil Table
                             
+                         
+                            
                             VStack(spacing: 0) {
                                 ForEach(self.tasksOnCurrentPage, id: \.task_id) { item in
                                     HStack(spacing: 0) {

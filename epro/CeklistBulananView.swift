@@ -6,13 +6,14 @@ struct CeklistBulananView: View {
     @State private var selectedBranchID: String = ""
     @State private var selectedBranchName: String = "Pilih Cabang"
     
-     
+    
+
     @State private var selectedLocation: String = ""
     @State private var selectedDate: Date = Date()
     @State private var isSudahDicek: Bool = false
     @State private var selectedRowsLimit: Int = 5
     @State private var currentPage: Int = 1
-    @State private var totalPages: Int = 2
+//    @State private var totalPages: Int = 2
     @State private var selectedTab: String = "INPEKSI"
     @State private var showLogoutAlert: Bool = false
     
@@ -32,6 +33,25 @@ struct CeklistBulananView: View {
     @State private var showDatePicker = false
     @State private var tempSelectedDate = Date()   // untuk popup
 
+
+    @State private var itemsPerPage = 5
+    
+
+       
+       var totalPages: Int {
+           let count = controller.assetsList.count
+           return count > 0 ? Int(ceil(Double(count) / Double(itemsPerPage))) : 1
+       }
+    
+       var trxOnCurrentPage: [AssetItem] {
+           let startIndex = (currentPage - 1) * itemsPerPage
+           let endIndex = min(startIndex + itemsPerPage, controller.assetsList.count)
+           
+           guard startIndex < controller.assetsList.count else { return [] }
+           return Array(controller.assetsList[startIndex..<endIndex])
+       }
+       
+       
     
     
     var body: some View {
@@ -40,16 +60,23 @@ struct CeklistBulananView: View {
             VStack(spacing: 16) {
                  
                 Menu {
-                    ForEach(controller.dataBranchuser, id: \.branch_id) { branch in
+                    ForEach(controller.dataBranch, id: \.branch_id  ) { branch in
+                        
                            Button(branch.branch_name) {
                                selectedLocation = branch.branch_name
                                selectedBranchID = branch.branch_id   // simpan id untuk API berikutnya
+                             
                                controller.getCeklistbulanan(
                                 branchID: branch.branch_id,
                                 taskDate: dateToString(tempSelectedDate),
-                                buttoncek:0
+                                buttoncek: isSudahDicek == false ? 0 : 1
                                )
+                               
+                            
+                             
                            }
+                        
+                        
                        }
                 } label: {
                     HStack {
@@ -73,9 +100,7 @@ struct CeklistBulananView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
-                .onAppear {
-                    controller.getbranch()
-                }
+              
                 
 
              
@@ -152,7 +177,14 @@ struct CeklistBulananView: View {
                  
                 HStack(spacing: 12) {
                     HStack(spacing: 0) {
-                        Button(action: { isSudahDicek = false }) {
+                        Button(action: { isSudahDicek = false
+                             controller.getCeklistbulanan(
+                             branchID: selectedBranchID,
+                             taskDate: dateToString(tempSelectedDate),
+                             buttoncek: 0
+                            )
+                            
+                        }) {
                             Text("Belum Dicek")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(!isSudahDicek ? .white : .black)
@@ -162,7 +194,15 @@ struct CeklistBulananView: View {
                                 .cornerRadius(22)
                         }
                         
-                        Button(action: { isSudahDicek = true }) {
+                        Button(action: { isSudahDicek = true
+                        
+                            controller.getCeklistbulanan(
+                            branchID: selectedBranchID,
+                            taskDate: dateToString(tempSelectedDate),
+                            buttoncek: 1
+                           )
+                            
+                        }) {
                             Text("Sudah Dicek")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(isSudahDicek ? .white : .black)
@@ -177,8 +217,16 @@ struct CeklistBulananView: View {
                     .cornerRadius(24)
                      
                     Menu {
-                        Button("5", action: { selectedRowsLimit = 5 })
-                        Button("10", action: { selectedRowsLimit = 10 })
+                        Button("5", action: {
+                            itemsPerPage = 5
+                            selectedRowsLimit = 5
+                        })
+                        Button("10", action: {
+                            itemsPerPage = 10
+                            selectedRowsLimit = 10})
+                        Button("20", action: {
+                            itemsPerPage = 20
+                            selectedRowsLimit = 20 })
                     } label: {
                         HStack {
                             Text("\(selectedRowsLimit)")
@@ -221,19 +269,31 @@ struct CeklistBulananView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
                     .background(Color.fromRGBAString(self.controller.main_table_col_color))
+                   
                     
                     Divider()
                      
+                   
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
-                            ForEach(controller.assetsList) { item in
+                            
+                            ForEach(self.trxOnCurrentPage) { item in
                                
                                 HStack(spacing: 0) {
-                                    Image(systemName: "qrcode")
-                                        .font(.system(size: 22, weight: .medium))
-                                        .foregroundColor(primaryPurple)
-                                        .frame(width: 60, alignment: .leading)
+            
+                    
+                                    Button {
+                                        self.controller.pageName = "INPUT INPEKSI"
+                                      
+                                    } label: {
+                                        Image(systemName: "qrcode")
+                                            .font(.system(size: 22, weight: .medium))
+                                            .foregroundColor(primaryPurple)
+                                            .frame(width: 60, alignment: .leading)
+                                    }
                                      
+                               
+                                    
                                     Text(item.asset_id)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
