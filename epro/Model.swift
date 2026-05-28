@@ -129,10 +129,20 @@ struct SparepartItem: Identifiable {
 struct AssetItem: Identifiable, Decodable {
     var id = UUID()
     var asset_id: String
+    
+    var scheduletask_id: String
+    var periode: String
+    var scheduletask_type: String
+    var kode_barcode: String
+    var generate_line: Int32
+    var scheduletaskdetil_line: Int32
+    var curr_periode_start: String
+    var task_id: String
+    var branch_id: String
+    var curr_periode_end: String
     var asset_name: String
     var asset_location: String
     var scheduletaskdetil_cycle: String
-    var curr_periode_start: String
     var curr_status: String
 }
 
