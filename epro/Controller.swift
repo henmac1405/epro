@@ -1921,7 +1921,7 @@ class Controller : ObservableObject{
                 
             ]
         
-
+      
 
             request.httpBody = components.query?.data(using: .utf8)
 
@@ -1961,19 +1961,39 @@ class Controller : ObservableObject{
                         self.isLoading = false
                         for (_, subJson):(String, JSON) in json["data"] {
                             let asset_id = subJson["asset_id"].stringValue
+                            let scheduletask_id = subJson["scheduletask_id"].stringValue
+                            let periode = subJson["periode"].stringValue
+                            let scheduletask_type = subJson["scheduletask_type"].stringValue
+                            let kode_barcode = subJson["kode_barcode"].stringValue
+                            let generate_line = subJson["generate_line"].stringValue
+                            let generateLineInt32 = Int32(generate_line) ?? 0
+                            let scheduletaskdetil_line = subJson["scheduletaskdetil_line"].stringValue
+                            let curr_periode_start = subJson["curr_periode_start"].stringValue
+                            let task_id = subJson["task_id"].stringValue
+                            let branch_id = subJson["branch_id"].stringValue
+                            let curr_periode_end = subJson["curr_periode_end"].stringValue
                             let asset_name = subJson["asset_name"].stringValue
                             let asset_location = subJson["asset_location"].stringValue
                             let scheduletaskdetil_cycle = subJson["scheduletaskdetil_cycle"].stringValue
-                            let curr_periode_start = subJson["curr_periode_start"].stringValue
                             let curr_status = subJson["curr_status"].stringValue
-                              
-                              
-                            self.assetsList.append(AssetItem(asset_id: asset_id,
-                                                             asset_name : asset_name,
-                                                             asset_location : asset_location,
-                                                             scheduletaskdetil_cycle : scheduletaskdetil_cycle,
-                                                             curr_periode_start : curr_periode_start,
-                                                             curr_status : curr_status
+                            
+ 
+                            self.assetsList.append(AssetItem(
+                                asset_id:asset_id,
+                                scheduletask_id:scheduletask_id,
+                                periode:periode,
+                                scheduletask_type:scheduletask_type,
+                                kode_barcode:kode_barcode,
+                                generate_line: Int32(generate_line) ?? 0,
+                                scheduletaskdetil_line:Int32(scheduletaskdetil_line) ?? 0  ,
+                                curr_periode_start:curr_periode_start,
+                                task_id:task_id,
+                                branch_id:branch_id,
+                                curr_periode_end:curr_periode_end,
+                                asset_name:asset_name,
+                                asset_location:asset_location,
+                                scheduletaskdetil_cycle:scheduletaskdetil_cycle,
+                                curr_status:curr_status
                                                             ))
                         }
                          

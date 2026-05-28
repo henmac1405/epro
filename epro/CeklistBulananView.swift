@@ -373,6 +373,14 @@ struct CeklistBulananView: View {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             self.task_date = formatter.string(from: Date())
+            
+            controller.getCeklistbulanan(
+             branchID: "",
+             taskDate: dateToString(tempSelectedDate),
+             buttoncek: isSudahDicek == false ? 0 : 1
+            )
+            
+            
         }
     }
 }
