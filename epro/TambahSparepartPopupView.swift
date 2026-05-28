@@ -8,6 +8,7 @@ struct TambahSparepartPopupView: View {
     @State private var namaItem: String = ""
     @State private var jumlahQty: Int = 0
     @State private var selectedPartType: String = ""
+    @State private var selectedPartTypeName: String = ""
     @State private var deskripsi: String = ""
     
     // Callback ketika data berhasil disimpan
@@ -32,6 +33,7 @@ struct TambahSparepartPopupView: View {
                 //let cleanDesc = item.taskpart_type.replacingOccurrences(of: "Tipe: ", with: "")
                 //_selectedPartType = State(initialValue: cleanDesc)
                 _deskripsi = State(initialValue: item.taskpart_descr)
+               
             }
         }
     var body: some View {
@@ -102,7 +104,8 @@ struct TambahSparepartPopupView: View {
                 ForEach(controller.parttype, id: \.parttype_id) { part in
                     Button(action: {
                         self.selectedPartTypeObj = part
-                        self.selectedPartType = part.parttype_name
+                        self.selectedPartType = part.parttype_id
+                        self.selectedPartTypeName = part.parttype_name
                         print("Jenis Part dipilih: \(part.parttype_name) (ID: \(part.parttype_id))")
                     }) {
                         Text(part.parttype_name)
@@ -110,7 +113,7 @@ struct TambahSparepartPopupView: View {
                 }
             } label: {
                 HStack {
-                    Text(selectedPartType.isEmpty ? "" : selectedPartType)
+                    Text(selectedPartType.isEmpty ? "" : selectedPartTypeName)
                         .font(.system(size: 16))
                         .foregroundColor(selectedPartType.isEmpty ? .gray : .black)
                     Spacer()
@@ -178,7 +181,13 @@ struct TambahSparepartPopupView: View {
                 
                 // Tombol Simpan (Ungu CT Corp)
                 Button(action: {
-                    if !namaItem.isEmpty {
+                    if namaItem == "" {
+                        self.controller.toastShow(message: "Item belum diisi", style: .error)
+                    } else if jumlahQty == 0 {
+                        self.controller.toastShow(message: "Qty belum di isi", style: .error)
+                    } else if selectedPartType == "" {
+                        self.controller.toastShow(message: "Tipe belum di pilih", style: .error)
+                    } else {
                         onSimpan(namaItem, jumlahQty, selectedPartType, deskripsi)
                         dismiss()
                     }
@@ -201,6 +210,10 @@ struct TambahSparepartPopupView: View {
             Spacer()
         }
         .padding(24)
-        .background(Color(red: 0.95, green: 0.94, blue: 0.96)) // Background popup abu-abu ungu muda
+        .background(Color(red: 0.95, green: 0.94, blue: 0.96))
+        .onAppear() {
+            selectedPartTypeName = self.controller.filtePartType(id: selectedPartType)
+        }
+         
     }
 }

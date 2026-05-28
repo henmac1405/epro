@@ -3,7 +3,7 @@ import SwiftData
 
 struct LoginView: View {
     @EnvironmentObject var controller : Controller
-    @State private var username: String = "liyanto"
+    @State private var username: String = "userdev"
     @State private var password: String = "rahasia123"
     
     @Environment(\.modelContext) private var modelContext
@@ -27,7 +27,7 @@ struct LoginView: View {
                  
                 VStack(spacing: 20) {
                     VStack(spacing: 8) {
-                        AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.login_logo)) { phase in
+                        AsyncImage(url: URL(string: self.controller.imageUrl + "themes/" + self.controller.login_logo)) { phase in
                             if let image = phase.image {
                                 image
                                     .resizable()

@@ -11,7 +11,10 @@ class Controller : ObservableObject{
     @Published var isLoading = false
     @Published var isCorrect = true
     @Published var url_api = "https://apidev.trans-property.com/index.php/api/v1/"
-    @Published var imageUrl = "https://api.trans-property.com/assets/upload/themes/"
+    @Published var imageUrl = "https://apidev.trans-property.com/assets/upload/"
+    @Published var imageAssetUrl = "https://eprodev.trans-property.com/assets/upload/maintenance/"
+    @Published var isProgress = false
+    
     
     @Published var showAlert = false
     @Published var SecretKeyNoLog = ""
@@ -25,7 +28,7 @@ class Controller : ObservableObject{
     @Published var version = "1.0.7"
     @Published var lustupdate = "20 Mei 2026"
     @Published var newVersion = false
-    
+    @Published var input_type = ""
     //themes
     @Published var theme_id = 0
     @Published var login_logo = "LOGO_69f36bd92b565.png"
@@ -63,8 +66,12 @@ class Controller : ObservableObject{
     
     @Published var loginSlider : [LoginSlider] = []
     @Published var mainSlider : [MainSlider] = []
-    @Published var task : [Task] = []
-    @Published var taskList: [Task] = []
+    @Published var task : [Tasks] = []
+    @Published var taskList: [Tasks] = []
+    @Published var taskDetil : [TaskDetil] = []
+    @Published var taskImage : [TaskImage] = []
+//    @Published var taskPartType : [TaskPartType] = []
+    @Published var sparepartList: [SparepartItem] = []
     
     @Published var tasktype : [TaskType] = []
     @Published var parttype : [PartType] = []
@@ -73,10 +80,17 @@ class Controller : ObservableObject{
     @Published var dataBranchuser : [DataBranchUser] = []
 
     
-    @Published var selectedTaskForEdit: Task? = nil
+    @Published var selectedTaskForEdit: Tasks? = nil
     
+    @Published var showToast: Bool = false
+    @Published var toastMessage: String = ""
+    @Published var toastStyle: ToastStyle = .success
     
+    enum ToastStyle {
+        case success, error
+    }
 
+    
     
     // MARK: - Function ----------------------------------------------------------------------------------------------
     
@@ -236,60 +250,45 @@ class Controller : ObservableObject{
         }
     }
     
+    func toastShow(message: String, style: ToastStyle) {
+        self.toastMessage = message
+        self.toastStyle = style
+        
+        withAnimation(.spring()) {
+            self.showToast = true
+        }
+        
+        // Otomatis hilangkan Toast setelah 3 detik
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.easeInOut) {
+                self.showToast = false
+            }
+        }
+    }
+
+    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+        
+        // Menghitung rasio baru agar gambar tidak gepeng (tetap proporsional)
+        let newSize = widthRatio > heightRatio ?
+            CGSize(width: size.width * heightRatio, height: size.height * heightRatio) :
+            CGSize(width: size.width * widthRatio,  height: size.height * widthRatio)
+        
+        let rect = CGRect(origin: .zero, size: newSize)
+        
+        // Membuat konteks grafis baru untuk menggambar ulang foto dalam ukuran kecil
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage ?? image
+    }
+
     // MARK: - API ----------------------------------------------------------------------------------------------
-      
-//    func getAPIKey() {
-//        
-//        let apiname = "apikey/show"
-//        
-//        self.signature = generateSignature(secretKey: branch_id)
-//        print("signature : \(self.signature)")
-//        
-//        guard let url = URL(string: self.url_api + apiname) else { return }
-//        print(url)
-//        var request = URLRequest(url: url)
-//        request.httpMethod = "POST"
-//        
-//        let body: [String: Any] = ["":""]
-//        
-//        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-//        request.setValue(self.signature, forHTTPHeaderField: "SECRETKEY")
-//        
-//        URLSession.shared.dataTask(with: request) { data, response, error in
-//            
-//            
-//            if let error = error {
-//                print("Error:", error.localizedDescription)
-//                self.showAlert = true
-//                self.responseMessage = "Error : \(error.localizedDescription)"
-//                self.isLoading = false
-//                return
-//            }
-//            
-//            guard let data = data else { return }
-//            
-//            
-//            let json = JSON(data)
-//            let message = json["message"].stringValue
-//            print(message)
-//            print(json["state"])
-//            
-//            DispatchQueue.main.async {
-//                self.responseMessage = message
-//                if (json["state"] == true){
-//                    self.apiKey = json["data"].stringValue
-//                    print(self.apiKey)
-//                    self.isCorrect = true
-//                    self.showAlert = false
-//                    self.getToken()
-//                } else {
-//                    self.isCorrect = false
-//                    self.responseMessage = message
-//                    self.showAlert = true
-//                }
-//            }
-//        }.resume()
-//    }
+       
     
     func getToken() {
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
@@ -676,7 +675,6 @@ class Controller : ObservableObject{
     }
 
     
-    
     func getInpeksiByUser(filter : String, taskid : String, taskdate : String,  tasktype : String) {
         let apiname = "inpeksi/show-byuser"
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
@@ -726,7 +724,7 @@ class Controller : ObservableObject{
             print(json["state"])
             DispatchQueue.main.async {
                 self.task.removeAll()
-                self.responseMessage = message
+                
                 
                 if (json["state"] == true) {
                     self.isLoading = false
@@ -742,7 +740,7 @@ class Controller : ObservableObject{
                         let branch_id = subJson["branch_id"].stringValue
                         
                         print("task_id \(task_id)")
-                        self.task.append(Task(task_id: task_id, task_date : rawDateString, task_description: task_description, task_descriptionafter: task_descriptionafter, task_type: task_type, task_ismonthly: task_ismonthly, asset_id: asset_id, branch_id: branch_id))
+                        self.task.append(Tasks(task_id: task_id, task_date : rawDateString, task_description: task_description, task_descriptionafter: task_descriptionafter, task_type: task_type, task_ismonthly: task_ismonthly, asset_id: asset_id, branch_id: branch_id))
                     }
                     
                 } else {
@@ -755,7 +753,616 @@ class Controller : ObservableObject{
             }
         }.resume()
     }
+    
+    func getInpeksiByUserByID(taskid : String, completion: @escaping () -> Void) {
+        let apiname = "task/show-detil"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isProgress = true
+         
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "task_id", value: taskid),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isProgress = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+            DispatchQueue.main.async {
+                self.taskDetil.removeAll()
+//                self.taskPartType.removeAll()
+                self.sparepartList.removeAll()
+                self.taskImage.removeAll()
+                self.responseMessage = message
+                self.isProgress = false
+                
+                if (json["state"] == true) {
+                    
+                    let dataObj = json["data"]
+                     
+                    let task_id = dataObj["task_id"].stringValue
+                    let task_description = dataObj["task_description"].stringValue
+                    let task_date = dataObj["task_date"].stringValue
+                    let task_descriptionafter = dataObj["task_descriptionafter"].stringValue
+                    let task_type = dataObj["task_type"].stringValue
+                    let task_ismonthly = dataObj["task_ismonthly"].intValue
+                    let asset_id  = dataObj["asset_id"].intValue
+                    let asset_name = dataObj["asset_name"].stringValue
+                    let asset_type = dataObj["asset_type"].stringValue
+                    let asset_location = dataObj["asset_location"].stringValue
+                    let asset_image = dataObj["asset_image"].stringValue
+                    let kode_barcode = dataObj["kode_barcode"].stringValue
+                    let brand_name = dataObj["brand_name"].stringValue
+                    let branch_id = dataObj["branch_id"].stringValue
+                    
+                    self.taskDetil.append(TaskDetil(
+                        task_id: task_id,
+                        task_description: task_description,
+                        task_date: task_date,
+                        task_descriptionafter: task_descriptionafter,
+                        task_type: task_type,
+                        task_ismonthly: task_ismonthly,
+                        asset_id: asset_id,
+                        asset_name: asset_name,
+                        asset_type: asset_type,
+                        asset_location: asset_location,
+                        asset_image: asset_image,
+                        kode_barcode: kode_barcode,
+                        brand_name: brand_name,
+                        branch_id: branch_id
+                        ))
 
+                    print("kode_barcode \(kode_barcode)")
+                    for (_, subJson):(String, JSON) in dataObj["image"] {
+                        
+                        let task_id = subJson["task_id"].stringValue
+                        let taskimage_type = subJson["taskimage_type"].stringValue
+                        let taskimage_line = subJson["taskimage_line"].intValue
+                        let taskimage_name = subJson["taskimage_name"].stringValue
+                        let branch_id = subJson["branch_id"].stringValue
+                        print("taskimage_name \(taskimage_name)")
+                        let urlGambarNetwork = self.imageUrl + "maintenance/" + taskimage_name
+                        
+                        Task {
+                            if let img = await self.downloadUIImage(from: urlGambarNetwork) {
+                                withAnimation {
+                                    self.taskImage.append(
+                                        TaskImage(
+                                            task_id: task_id,
+                                            taskimage_type: taskimage_type,
+                                            taskimage_line: taskimage_line,
+                                            taskimage_name: taskimage_name,
+                                            branch_id: branch_id,
+                                            image: img
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        
+                    }
+                    
+                    for (_, subJson):(String, JSON) in dataObj["part"] {
+                        let task_id = subJson["task_id"].stringValue
+                        let taskpart_name = subJson["taskpart_name"].stringValue
+                        let taskpart_line = subJson["taskpart_line"].intValue
+                        let taskpart_type = subJson["taskpart_type"].stringValue
+                        let taskpart_qty = subJson["taskpart_qty"].intValue
+                        let taskpart_descr = subJson["taskpart_descr"].stringValue
+                        let branch_id = subJson["branch_id"].stringValue
+                        
+                        print("taskpart_name \(taskpart_name)")
+//                        self.taskPartType.append(TaskPartType(task_id: task_id, taskpart_name: taskpart_name, taskpart_line: taskpart_line, taskpart_type: taskpart_type, taskpart_qty: taskpart_qty,taskpart_descr: taskpart_descr,  branch_id: branch_id))
+                        
+                        self.sparepartList.append(SparepartItem(taskpart_name: taskpart_name, taskpart_qty: taskpart_qty,taskpart_type: taskpart_type, taskpart_descr: taskpart_descr))
+                        
+                        
+                    }
+                    completion()
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isProgress = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
+    func saveInpeksi(task_id : String, task_date : String, task_description : String, task_descriptionafter : String, task_type : String, task_ismonthly : Int,  asset_id : String, branch_id : String, completion: @escaping () -> Void) {
+        let apiname = "task/save"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+         
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        var queryItems = [
+                URLQueryItem(name: "task_id", value: task_id),
+                URLQueryItem(name: "task_date", value: task_date),
+                URLQueryItem(name: "task_description", value: task_description),
+                URLQueryItem(name: "task_descriptionafter", value: task_descriptionafter),
+                URLQueryItem(name: "task_type", value: task_type),
+                URLQueryItem(name: "task_ismonthly", value: String(task_ismonthly)),
+                URLQueryItem(name: "asset_id", value: asset_id),
+                URLQueryItem(name: "branch_id", value: branch_id),
+                URLQueryItem(name: "username", value: self.username),
+            ]
+            
+            // 2. BARU: Lakukan perulangan (loop) untuk memasukkan isi array spareparts ke queryItems
+            for (index, part) in sparepartList.enumerated() {
+                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_name]", value: part.taskpart_name))
+                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_qty]", value: String(part.taskpart_qty)))
+                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_type]", value: part.taskpart_type))
+                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_descr]", value: part.taskpart_descr))
+            }
+            
+            // Masukkan semua query items yang digabung ke komponen URL
+        components.queryItems = queryItems
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                self.showAlert = true
+                self.isLoading = false
+                if (json["state"] == true) {
+                    completion() 
+                } else {
+                }
+            }
+        }.resume()
+    }
+    
+    func submitTasksWithImages(
+        task_id: String,
+        task_date: String,
+        task_description: String,
+        task_descriptionafter: String,
+        task_type: String,
+        task_ismonthly: Int,
+        asset_id: String,
+        branch_id: String,
+        spareparts: [SparepartItem],
+        completion: @escaping ([String: Any]) -> Void
+    ) {
+        // 1. Bersihkan URL, JANGAN kirim query param di URL lagi agar PHP tidak bingung
+        var apiname = ""
+        if self.input_type == "NEW" {
+              apiname = "task/save"
+        } else if self.input_type == "EDIT" {
+              apiname = "task/update"
+        }
+        
+        self.isProgress = true
+        
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let completeUrl = URL(string: self.url_api + apiname) else { return }
+        print(completeUrl)
+        var request = URLRequest(url: completeUrl)
+        request.httpMethod = "POST"
+        
+        // Set Header Otentikasi Security
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        // Set Boundary Multipart
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        
+        // 2. PINDAHKAN SEMUA PARAMETER TEKS KE SINI (MULTIPART BODY)
+        let textParameters: [String: String] = [
+            "task_id": task_id,
+            "task_date": task_date,
+            "task_description": task_description,
+            "task_descriptionafter": task_descriptionafter,
+            "task_type": task_type,
+            "task_ismonthly": String(task_ismonthly),
+            "asset_id": asset_id,        // Sekarang dikirim via POST Body, CodeIgniter PASTI bisa baca
+            "branch_id": branch_id,
+            "username": self.username
+        ]
+        print(textParameters)
+        // Bungkus semua teks ke format multipart biner
+        for (key, value) in textParameters {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        
+        // 3.  Sparepart (Kebutuhan Suku Cadang)
+        let sparepartArrayMap = spareparts.map { item -> [String: Any] in
+            return [
+                "taskpart_name": item.taskpart_name,
+                "taskpart_qty": item.taskpart_qty,
+                "taskpart_type": Int(item.taskpart_type) ?? 0,
+                "taskpart_descr": item.taskpart_descr
+            ]
+        }
+        print(sparepartArrayMap)
+        
+        let jsonString: String
+        if let jsonData = try? JSONSerialization.data(withJSONObject: sparepartArrayMap, options: []),
+           let convertedString = String(data: jsonData, encoding: .utf8) {
+            jsonString = convertedString
+        } else {
+            jsonString = "[]"
+        }
+
+        // PERBAIKAN: Menyusun baris multipart biner secara presisi dan bersih
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"taskpart\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(jsonString)\r\n".data(using: .utf8)!) // Pastikan ada \r\n di akhir nilai string JSON
+
+        
+//         4. Masukkan File Gambar dari Array taskImage
+        for (index, taskImg) in self.taskImage.enumerated() {
+            let gambarKecil = resizeImage(image: taskImg.image, targetSize: CGSize(width: 1024, height: 1024))
+                 
+            guard let imageData = gambarKecil.jpegData(compressionQuality: 0.3) else { continue }
+                  
+            let namaFieldGrup: String
+            if taskImg.taskimage_type == "2" {
+                namaFieldGrup = "foto_after[]"
+            } else {
+                namaFieldGrup = "foto_before[]"
+            }
+            
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(namaFieldGrup)\"; filename=\"\(taskImg.taskimage_name)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            body.append(imageData)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+        // =========================================================================
+
+        
+        // Penutup Akhir Baris Multipart Body
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+        
+        // 5. Eksekusi pengiriman data ke server
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Gagal Koneksi: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.isProgress = false
+                }
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                // 1. Ambil data biner dan pastikan tidak kosong
+                if let dataTemp = data {
+                    do {
+                        // 2. Dekode data biner menjadi Dictionary Swift [String: Any]
+                        if let jsonResponse = try JSONSerialization.jsonObject(with: dataTemp, options: []) as? [String: Any] {
+                            
+                            // 3. Ekstrak nilai dari properti JSON backend Anda
+                            let statusSukses = jsonResponse["state"] as? Bool ?? false
+                            let pesanServer = jsonResponse["message"] as? String ?? "Tidak ada pesan"
+                            let kodeServer = jsonResponse["code"] as? Int ?? httpResponse.statusCode
+                            
+                            completion(jsonResponse)
+                            
+                            DispatchQueue.main.async {
+                                self.isProgress = false
+                            }
+                            
+                            
+                            print("================ RESPONS JSON SERVER ================")
+                            print("State: \(statusSukses)")
+                            print("Code: \(kodeServer)")
+                            print("Message: \(pesanServer)")
+                            print("====================================================")
+                            
+                            // 4. Cek validasi berdasarkan state dari backend, bukan cuma status code HTTP
+                            if statusSukses && (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) {
+                                print("🎉 BERHASIL! Server SQL Server sukses menyimpan seluruh data!")
+                                
+                                // Lakukan aksi sukses di Main Thread (UI Thread)
+                                DispatchQueue.main.async {
+                                    //self.taskImage.removeAll()
+                                    // Anda bisa mengosongkan list sparepart juga di sini jika diperlukan:
+                                    // self.sparepartList.removeAll()
+                                }
+                            } else {
+                                print("Gagal Validasi Backend: \(pesanServer)")
+                            }
+                        }
+                    } catch {
+                        // Menangkap error jika respons dari server bukan format JSON yang valid (misal teks HTML error)
+                        if let rawResponseString = String(data: dataTemp, encoding: .utf8) {
+                            print("Respons Bukan JSON (Raw Text): \(rawResponseString)")
+                        } else {
+                            print("Gagal mengurai JSON: \(error.localizedDescription)")
+                        }
+                    }
+                }
+            }
+
+        }.resume()
+    }
+    
+    func verifyAssetData(
+        asset_id: String,
+        branch_id: String,
+        isavailable: String,
+        fotoVerifikasi: UIImage?,
+        completion: @escaping ([String: Any]) -> Void
+    ) {
+        let apiname = "assetverify/save"
+        
+        self.isProgress = true
+        
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        // Set Header Security & Otentikasi
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        // Set Boundary Multipart Form-Data
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        
+        // 2. Susun Semua Parameter Teks POST yang Diminta CodeIgniter
+        let textParameters: [String: String] = [
+            "asset_id": asset_id,
+            "username": self.username,
+            "branch_id": branch_id,
+            "isavailable": isavailable
+        ]
+        
+        for (key, value) in textParameters {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        
+        // 3. Masukkan File Gambar Tunggal ke Field Berlabel name="file" (Jika asset_id tersedia / isavailable == "1")
+        if isavailable == "1", let uiImage = fotoVerifikasi {
+            // Optimasi: Perkecil resolusi & kompresi foto verifikasi agar hemat harddisk server dan di bawah batas max_size (5MB)
+            let gambarKecil = resizeImage(image: uiImage, targetSize: CGSize(width: 1024, height: 1024))
+            if let imageData = gambarKecil.jpegData(compressionQuality: 0.4) {
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                // PERBAIKAN UTAMA: Menggunakan name="file" sesuai perintah backend $this->upload->do_upload('file')
+                body.append("Content-Disposition: form-data; name=\"file\"; filename=\"verifikasi_asset_\(Date().timeIntervalSince1970).jpg\"\r\n".data(using: .utf8)!)
+                body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+                body.append(imageData)
+                body.append("\r\n".data(using: .utf8)!)
+            }
+        }
+        
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+        
+        // 4. Jalankan Request Network
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(["state": false, "message": error.localizedDescription])
+                self.isProgress = false
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse, let dataTemp = data {
+                self.isProgress = false
+                do {
+                    if let jsonResponse = try JSONSerialization.jsonObject(with: dataTemp, options: []) as? [String: Any] {
+                        completion(jsonResponse)
+                    }
+                } catch {
+                    completion(["state": false, "message": "Gagal mengurai respons server."])
+                }
+            }
+        }.resume()
+    }
+
+    
+    func submitVerifyAssetWithImages(
+        asset_isavailable: Int,
+        asset_id: String,
+        branch_id: String,
+        image : UIImage,
+        completion: @escaping ([String: Any]) -> Void
+    ) {
+        // 1. Bersihkan URL, JANGAN kirim query param di URL lagi agar PHP tidak bingung
+         
+        let apiname = "assetverify/save"
+        
+        self.isProgress = true
+        
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let completeUrl = URL(string: self.url_api + apiname) else { return }
+        print(completeUrl)
+        var request = URLRequest(url: completeUrl)
+        request.httpMethod = "POST"
+        
+        // Set Header Otentikasi Security
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        // Set Boundary Multipart
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        
+        // 2. PINDAHKAN SEMUA PARAMETER TEKS KE SINI (MULTIPART BODY)
+        let textParameters: [String: String] = [
+            "isavailable": String(asset_isavailable),
+            "asset_id": asset_id,
+            "branch_id": branch_id,
+            "username": self.username
+        ]
+        print(textParameters)
+        // Bungkus semua teks ke format multipart biner
+        for (key, value) in textParameters {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+         
+         
+//         4. Masukkan File Gambar dari Array taskImage
+        for (index, taskImg) in self.taskImage.enumerated() {
+            let gambarKecil = resizeImage(image: taskImg.image, targetSize: CGSize(width: 1024, height: 1024))
+                 
+            guard let imageData = gambarKecil.jpegData(compressionQuality: 0.3) else { continue }
+                  
+            let namaFieldGrup: String
+            if taskImg.taskimage_type == "2" {
+                namaFieldGrup = "foto_after[]"
+            } else {
+                namaFieldGrup = "foto_before[]"
+            }
+            
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(namaFieldGrup)\"; filename=\"\(taskImg.taskimage_name)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            body.append(imageData)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+        // =========================================================================
+
+        
+        // Penutup Akhir Baris Multipart Body
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+        
+        // 5. Eksekusi pengiriman data ke server
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Gagal Koneksi: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.isProgress = false
+                }
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                // 1. Ambil data biner dan pastikan tidak kosong
+                if let dataTemp = data {
+                    do {
+                        // 2. Dekode data biner menjadi Dictionary Swift [String: Any]
+                        if let jsonResponse = try JSONSerialization.jsonObject(with: dataTemp, options: []) as? [String: Any] {
+                            
+                            // 3. Ekstrak nilai dari properti JSON backend Anda
+                            let statusSukses = jsonResponse["state"] as? Bool ?? false
+                            let pesanServer = jsonResponse["message"] as? String ?? "Tidak ada pesan"
+                            let kodeServer = jsonResponse["code"] as? Int ?? httpResponse.statusCode
+                            
+                            completion(jsonResponse)
+                            
+                            DispatchQueue.main.async {
+                                self.isProgress = false 
+                            }
+                            
+                            
+                            print("================ RESPONS JSON SERVER ================")
+                            print("State: \(statusSukses)")
+                            print("Code: \(kodeServer)")
+                            print("Message: \(pesanServer)")
+                            print("====================================================")
+                            
+                            // 4. Cek validasi berdasarkan state dari backend, bukan cuma status code HTTP
+                            if statusSukses && (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) {
+                                print("🎉 BERHASIL! Server SQL Server sukses menyimpan seluruh data!")
+                                
+                                // Lakukan aksi sukses di Main Thread (UI Thread)
+                                DispatchQueue.main.async {
+                                    //self.taskImage.removeAll()
+                                    // Anda bisa mengosongkan list sparepart juga di sini jika diperlukan:
+                                    // self.sparepartList.removeAll()
+                                }
+                            } else {
+                                print("Gagal Validasi Backend: \(pesanServer)")
+                            }
+                        }
+                    } catch {
+                        // Menangkap error jika respons dari server bukan format JSON yang valid (misal teks HTML error)
+                        if let rawResponseString = String(data: dataTemp, encoding: .utf8) {
+                            print("Respons Bukan JSON (Raw Text): \(rawResponseString)")
+                        } else {
+                            print("Gagal mengurai JSON: \(error.localizedDescription)")
+                        }
+                    }
+                }
+            }
+
+        }.resume()
+    }
+
+ 
     
     func getBranchByUser() {
         let apiname = "branch/branch-user"
@@ -975,7 +1582,7 @@ class Controller : ObservableObject{
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         
-        self.isLoading = true
+        self.isProgress = true
          
          
         request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
@@ -998,7 +1605,7 @@ class Controller : ObservableObject{
                 DispatchQueue.main.async {
                     self.showAlert = true
                     self.responseMessage = "Error : \(error.localizedDescription)"
-                    self.isLoading = false
+                    self.isProgress = false
                 }
                 return
             }
@@ -1013,18 +1620,136 @@ class Controller : ObservableObject{
               
             DispatchQueue.main.async {
                 self.responseMessage = message
-                
+                self.isProgress = false
+                completion(json)
                 if (json["state"] == true) {
-                    self.isCorrect = true
-                    self.isLoading = false
-                    completion(json)
+                    
+                    self.responseMessage = message
+                    print("sukses : \(self.responseMessage)")
                     
                 } else {
                     self.responseMessage = message
                     print("error : \(self.responseMessage)")
-                    self.isCorrect = false
-                    self.isLoading = false
+                }
+            }
+        }.resume()
+    }
+    
+    func findVerifyAsset(searchText : String, completion: @escaping (JSON?) -> Void) {
+        let apiname = "assetverify/scan"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isProgress = true
+         
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "barcode", value: searchText),
+            URLQueryItem(name: "username", value: self.username),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
                     self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isProgress = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                self.isProgress = false
+                completion(json)
+                if (json["state"] == true) {
+                    
+                    self.responseMessage = message
+                    print("sukses : \(self.responseMessage)")
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                }
+            }
+        }.resume()
+    }
+    
+    func findHistoryAsset(searchText : String) {
+        let apiname = "assethistory/show"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isProgress = true
+         
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "barcode", value: searchText),
+            URLQueryItem(name: "username", value: self.username),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isProgress = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+              
+            DispatchQueue.main.async {
+                self.responseMessage = message
+                self.isProgress = false
+                if (json["state"] == true) {
+                    
+                    
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
                 }
             }
         }.resume()
@@ -1373,7 +2098,20 @@ class Controller : ObservableObject{
     
     
     
-    
+    func downloadUIImage(from urlString: String) async -> UIImage? {
+        guard let url = URL(string: urlString) else { return nil }
+        
+        do {
+            // Mengunduh data dari internet
+            let (data, _) = try await URLSession.shared.data(from: url)
+            // Mengonversi Data menjadi UIImage
+            return UIImage(data: data)
+        } catch {
+            print("Error download gambar: \(error)")
+            return nil
+        }
+    }
+
 
     
 }

@@ -59,7 +59,7 @@ struct ImageSliderView: View {
             }
         }
         .onAppear() {
-            urlimage = self.controller.imageUrl
+            urlimage = self.controller.imageUrl + "themes/"
         }
     }
 }
