@@ -10,7 +10,8 @@ struct HomeView: View {
     @State private var selectedTab: String = "HOME"
     @State private var showLogoutAlert: Bool = false
     
-    //    let primaryPurple = Color(red: 0.65, green: 0.02, blue: 0.76)
+    @State private var  primaryPurple = Color(red: 0.65, green: 0.02, blue: 0.76)
+    
     let lightBlueBG = Color(red: 0.92, green: 0.96, blue: 1.00)
     
     var body: some View {
@@ -21,7 +22,7 @@ struct HomeView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
                         ZStack(alignment: .bottom) {
-                            AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_background_image)) { phase in
+                            AsyncImage(url: URL(string: self.controller.imageUrl + "themes/" + self.controller.main_background_image)) { phase in
                                 if let image = phase.image {
                                     image
                                         .resizable()
@@ -31,7 +32,6 @@ struct HomeView: View {
                                         .clipped()
                                     
                                 } else {
-                                    // Kontainer kosong transparan saat gambar sedang di-load
                                     Color.clear
                                         .frame(maxWidth: .infinity)
                                         .frame(height: 200)
@@ -55,7 +55,7 @@ struct HomeView: View {
                                 .padding(.bottom, 20)
                             
                             VStack(spacing: 24) {
-                                AsyncImage(url: URL(string: self.controller.imageUrl + self.controller.main_image_header)) { phase in
+                                AsyncImage(url: URL(string: self.controller.imageUrl + "themes/" + self.controller.main_image_header)) { phase in
                                             if let image = phase.image {
                                                 image
                                                     .resizable()
@@ -149,8 +149,35 @@ struct HomeView: View {
             self.controller.getBranchByUser()
             self.controller.getTaskType()
             self.controller.getPartType()
+            primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
         }
         .ignoresSafeArea(edges: .top)
+        // MARK: - PROGRESSIVE DIALOG LOADING (Substitusi .alert)
+        .overlay {
+            if controller.isProgress {
+                ZStack {
+                    // 1. Latar belakang gelap transparan untuk mengunci layar belakang
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    // 2. Struktur Kotak Dialog Pop-up
+                    VStack(spacing: 20) {
+                        
+                        // Animasi loading putar yang ingin Anda tampilkan
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .controlSize(.regular)
+                            .scaleEffect(2.5)
+                            .tint(primaryPurple)
+                    } 
+                    .frame(width: 100, height: 100)
+                    .background(Color.white)
+                    .cornerRadius(14)
+                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+                }
+                .transition(.opacity)
+            }
+        }
         
     }
     
@@ -198,7 +225,6 @@ struct MenuView : View {
                 // Inspeksi
                 Button(action: {
                     controller.pageName = "INPEKSI"
-                    print(controller.pageName)
                 })
                 {
                     MainGridMenuButton(icon: "ico_task", title: "INPEKSI", iconColor: primaryPurple, boxColor: lightBlueBG)

@@ -22,18 +22,15 @@ struct InpeksiView: View {
     let lightGrayBG = Color(red: 0.96, green: 0.95, blue: 0.97)
     
     
-    
-    // Fungsi Penyaringan Data Otomatis (Computed Property)
-    var filteredTasks: [Task] {
+     
+    var filteredTasks: [Tasks] {
         let allTasks = controller.task
-        
-        // Jika kolom pencarian teks dan filter tanggal kosong, langsung tampilkan semua data murni
+         
         if searchText.isEmpty && filtertask_date.isEmpty {
             return allTasks
         }
         
         return allTasks.filter { item in
-            // 1. SENSOR TEKS (Memeriksa 4 Kolom Sekaligus dengan Logika OR)
             let kataKunci = searchText.lowercased()
             let cocokTeks = !searchText.isEmpty && (
                 item.task_description.lowercased().contains(kataKunci) ||
@@ -41,12 +38,9 @@ struct InpeksiView: View {
                 item.task_type.lowercased().contains(kataKunci) ||
                 item.asset_id.lowercased().contains(kataKunci)
             )
-            
-            // 2. SENSOR TANGGAL
             let cocokTanggal = !filtertask_date.isEmpty &&
                 item.task_date.contains(filtertask_date)
-            
-            // GABUNGAN OR UTAMA: Lolos jika cocok salah satu teks kriteria ATAU cocok tanggalnya
+             
             return cocokTeks || cocokTanggal
         }
     }
@@ -60,7 +54,7 @@ struct InpeksiView: View {
         return count > 0 ? Int(ceil(Double(count) / Double(itemsPerPage))) : 1
     }
  
-    var tasksOnCurrentPage: [Task] {
+    var tasksOnCurrentPage: [Tasks] {
         let startIndex = (currentPage - 1) * itemsPerPage
         let endIndex = min(startIndex + itemsPerPage, filteredTasks.count)
         
@@ -179,8 +173,12 @@ struct InpeksiView: View {
                 
                 HStack(spacing: 12) {
                     Button(action: {
-                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
-                        
+//                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
+                        searchText = ""
+                        filtertask_id = ""
+                        filtertask_date = ""
+                        filtertask_type = ""
+                        selectedRowsLimit = 5
                     }) {
                         HStack {
                             Image(systemName: "line.3.horizontal.decrease.circle.fill")
@@ -200,7 +198,6 @@ struct InpeksiView: View {
                         filtertask_date = ""
                         filtertask_type = ""
                         selectedRowsLimit = 5
-//                        self.controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
                     }) {
                         HStack {
                             Image(systemName: "arrow.counterclockwise")
@@ -221,6 +218,11 @@ struct InpeksiView: View {
                 .padding(.horizontal, 16)
                 
                 Button(action: {
+                    self.controller.input_type = "NEW"
+                    print("NEW")
+                    self.controller.selectedTaskForEdit = nil
+                    self.controller.sparepartList.removeAll()
+                    self.controller.taskImage.removeAll()
                     self.controller.pageName = "INPUT INPEKSI"
                 }) {
                     HStack {
@@ -284,24 +286,28 @@ struct InpeksiView: View {
                                             .font(.system(size: 15, weight: .regular))
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding()
                                         
                                         // Kolom 2: Deskripsi
                                         Text(item.task_description)
                                             .font(.system(size: 15, weight: .regular))
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding()
                                         
                                         // Kolom 3: Tanggal
                                         Text(item.task_date)
                                             .font(.system(size: 15, weight: .regular))
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding()
                                         
                                         // Kolom 4: Aksi Edit
                                         Button(action: {
                                             print("Mengedit item: \(item.task_description)")
                                             self.controller.selectedTaskForEdit = item
                                             self.controller.pageName = "INPUT INPEKSI"
+                                            self.controller.input_type = "EDIT"
                                         }) {
                                             Image(systemName: "pencil")
                                                 .font(.system(size: 20, weight: .bold))

@@ -30,13 +30,7 @@ struct PartType : Codable {
     var parttype_name: String
 }
 
-struct SparepartItem: Identifiable {
-    let id = UUID()
-    var taskpart_name: String
-    var taskpart_qty: Int
-    var taskpart_type: String
-    var taskpart_descr: String
-}
+
 
 struct AssetFind : Codable {
     var asset_id: String
@@ -76,7 +70,7 @@ struct MainSlider : Codable {
     var main_slider_images : String
 }
 
-struct Task : Codable {
+struct Tasks : Codable {
     var task_id : String
     var task_date : String
     var task_description : String
@@ -85,6 +79,51 @@ struct Task : Codable {
     var task_ismonthly : Int
     var asset_id : String
     var branch_id : String
+}
+
+struct TaskDetil : Codable {
+    var task_id : String
+    var task_description : String
+    var task_date : String
+    var task_descriptionafter : String
+    var task_type : String
+    var task_ismonthly : Int
+    var asset_id : Int
+    var asset_name : String
+    var asset_type : String
+    var asset_location : String
+    var asset_image : String
+    var kode_barcode : String
+    var brand_name : String
+    var branch_id : String 
+}
+
+struct TaskImage : Identifiable {
+    let id = UUID()
+    var task_id : String
+    var taskimage_type : String
+    var taskimage_line : Int
+    var taskimage_name : String
+    var branch_id : String
+    var image : UIImage
+}
+
+//struct TaskPartType : Codable {
+//    var task_id : String
+//    var taskpart_name : String
+//    var taskpart_line : Int
+//    var taskpart_type : String
+//    var taskpart_qty : Int
+//    var taskpart_descr : String
+//    var branch_id : String
+//}
+
+struct SparepartItem: Identifiable {
+    let id = UUID()
+    var taskpart_name: String
+    var taskpart_qty: Int
+    var taskpart_type: String
+    var taskpart_descr: String
 }
 
 struct AssetItem: Identifiable, Decodable {
