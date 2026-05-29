@@ -3,15 +3,13 @@ import SwiftUI
 struct TambahSparepartPopupView: View {
     @EnvironmentObject var controller: Controller
     @Environment(\.dismiss) private var dismiss
-    
-    // State untuk menampung input data formulir
+     
     @State private var namaItem: String = ""
     @State private var jumlahQty: Int = 0
     @State private var selectedPartType: String = ""
     @State private var selectedPartTypeName: String = ""
     @State private var deskripsi: String = ""
-    
-    // Callback ketika data berhasil disimpan
+     
     var onSimpan: (String, Int, String, String) -> Void
     
     let primaryPurple = Color(red: 0.53, green: 0.00, blue: 0.56)
@@ -99,7 +97,7 @@ struct TambahSparepartPopupView: View {
             .cornerRadius(12)
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.5), lineWidth: 1))
             
-            // 4. DROPDOWN SATUAN ITEM (Pcs, Box, dll.)
+            // 4. DROPDOWN Type
             Menu {
                 ForEach(controller.parttype, id: \.parttype_id) { part in
                     Button(action: {
@@ -146,26 +144,25 @@ struct TambahSparepartPopupView: View {
                     TextEditor(text: $deskripsi)
                         .font(.system(size: 16))
                         .frame(height: 100)
-                        .onChange(of: deskripsi) { newValue in
-                            if newValue.count > 500 {
-                                deskripsi = String(newValue.prefix(500))
-                            }
+                    .onChange(of: deskripsi) { oldValue, newValue in
+                        if newValue.count > 500 {
+                            deskripsi = String(newValue.prefix(500))
                         }
+                    }
+
                 }
                 .padding(8)
                 .background(Color.white)
                 .cornerRadius(12)
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.5), lineWidth: 1))
-                
-                // Indikator angka karakter 0/500 sesuai gambar
+                 
                 Text("\(deskripsi.count)/500")
                     .font(.system(size: 12))
                     .foregroundColor(.gray)
             }
             
-            // 6. TOMBOL AKSI: BATAL & SIMPAN (Horizontal Berwarna Sesuai Gambar)
+            // 6. TOMBOL AKSI: BATAL & SIMPAN
             HStack(spacing: 16) {
-                // Tombol Batal (Abu-abu Gelap)
                 Button(action: { dismiss() }) {
                     HStack(spacing: 8) {
                         Image(systemName: "xmark.circle.fill")
@@ -178,8 +175,7 @@ struct TambahSparepartPopupView: View {
                     .background(Color(red: 0.33, green: 0.33, blue: 0.35))
                     .cornerRadius(12)
                 }
-                
-                // Tombol Simpan (Ungu CT Corp)
+                 
                 Button(action: {
                     if namaItem == "" {
                         self.controller.toastShow(message: "Item belum diisi", style: .error)

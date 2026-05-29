@@ -266,7 +266,7 @@ struct InpeksiView: View {
                                     .frame(width: 60, alignment: .trailing)
                             }
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Color(.white))
+                            .foregroundColor(Color(.black))
                             .padding(.horizontal, 24)
                             .padding(.vertical, 16)
                             .background(Color.fromRGBAString(self.controller.main_table_col_color))
@@ -371,6 +371,7 @@ struct InpeksiView: View {
         .onAppear() {
             controller.getInpeksiByUser(filter: searchText, taskid: filtertask_id, taskdate: filtertask_date, tasktype: filtertask_type)
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
+            self.controller.getTaskType(param : "0")
             
         }
         .ignoresSafeArea(edges: .top)

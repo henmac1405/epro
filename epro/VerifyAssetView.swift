@@ -73,7 +73,6 @@ struct VerifyAssetView : View {
             if self.asset_selected == true {
                 // MARK: - 2. KARTU STATUS VERIFIKASI
                 VStack(alignment: .leading, spacing: 16) {
-                    // Status Judul
                     Text("Status Asset : \(asset_status)")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(primaryPurple)
@@ -213,11 +212,10 @@ struct VerifyAssetView : View {
                                     .clipped()
                             }
                         }
-                        
-                        // Baris Informasi Detail Sesuai Gambar
+                         
                         VStack(spacing: 12) {
                             // Kolom 1: Asset ID
-                            infoRow(label: "Asset ID :", value: asset_id) // Ganti dengan variabel dinamis: controller.assetDetail.asset_id
+                            infoRow(label: "Asset ID :", value: asset_id)
                             
                             // Kolom 2: Kode Barcode
                             infoRow(label: "Kode Barcode :", value: kode_barcode)
@@ -244,7 +242,7 @@ struct VerifyAssetView : View {
                             infoRow(label: "Capacity :", value: asset_capacity)
                             
                             // Kolom 10: Vendor Pembelian
-                            infoRow(label: "Vendor\nPembelian :", value: vendor_name) // Kosongkan atau beri strip jika nilai kosong dari API
+                            infoRow(label: "Vendor\nPembelian :", value: vendor_name)
                             
                             // Kolom 11: Tanggal Akhir Garansi
                             infoRow(label: "Tanggal Akhir\nGaransi :", value: buying_date)
@@ -292,19 +290,16 @@ struct VerifyAssetView : View {
             ImagePicker(image: $tempFotoVerifikasi, sourceType: .photoLibrary)
         }
     }
-    
-    // Fungsi Bantuan untuk Menyusun Baris Informasi Suku Kata Sejajar Lurus
+     
     @ViewBuilder
     private func infoRow(label: String, value: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            // Teks Label Sebelah Kiri (Lebar dikunci pada 140 agar titik dua sejajar lurus ke bawah)
             Text(label)
                 .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.black.opacity(0.8))
                 .frame(width: 140, alignment: .leading)
                 .lineSpacing(3)
-            
-            // Teks Nilai Sebelah Kanan
+             
             Text(value)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.black.opacity(0.7))
