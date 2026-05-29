@@ -79,7 +79,11 @@ class Controller : ObservableObject{
 
     @Published var assetsList: [AssetItem] = []
     @Published var dataBranchuser : [DataBranchUser] = []
+
     @Published var taskscheduleDetil : [TaskScheduleDetil] = []
+
+    @Published var assethistory: [AssetHistory] = []
+
     
     @Published var selectedTaskForEdit: Tasks? = nil
     
@@ -2122,7 +2126,6 @@ class Controller : ObservableObject{
                             let scheduletask_type = subJson["scheduletask_type"].stringValue
                             let kode_barcode = subJson["kode_barcode"].stringValue
                             let generate_line = subJson["generate_line"].stringValue
-                            let generateLineInt32 = Int32(generate_line) ?? 0
                             let scheduletaskdetil_line = subJson["scheduletaskdetil_line"].stringValue
                             let curr_periode_start = subJson["curr_periode_start"].stringValue
                             let task_id = subJson["task_id"].stringValue
@@ -2185,6 +2188,131 @@ class Controller : ObservableObject{
 //                        print(jsonString)
 //                    }
 //                }
+
+            }.resume()
+        }
+    
+    
+    func getAssetHistory(barcode: String) {
+
+        
+            let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+            let apiname = "assethistory/show"
+
+            guard let url = URL(string: self.url_api + apiname) else { return }
+
+            print(url)
+
+        
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+
+            request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+            request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+            request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+
+            var components = URLComponents()
+
+            components.queryItems = [
+                URLQueryItem(name: "username", value: self.username),
+                URLQueryItem(name: "barcode", value: barcode),
+
+                
+            ]
+        
+      
+
+            request.httpBody = components.query?.data(using: .utf8)
+
+            request.setValue(
+                "application/x-www-form-urlencoded",
+                forHTTPHeaderField: "Content-Type"
+            )
+
+            URLSession.shared.dataTask(with: request) { data, response, error in
+
+                if let error = error {
+                    DispatchQueue.main.async {
+                        print("Error2 :", error.localizedDescription)
+                        self.showAlert = true
+                        self.responseMessage = "Error : \(error.localizedDescription)"
+                        self.isLoading = false
+                    }
+                    return
+                }
+                
+                guard let data = data else { return }
+                
+                let json = JSON(data)
+                let message = json["message"].stringValue
+                print("json : \(json)")
+                print("message : \(message)")
+                print(json["state"])
+                
+                
+                DispatchQueue.main.async {
+                    self.assetsList.removeAll()
+                    
+                    self.responseMessage = message
+                    if (json["state"] == true){
+                        self.isCorrect = true
+                        self.showAlert = false
+                        self.isLoading = false
+                        for (_, subJson):(String, JSON) in json["data"] {
+                            
+                            
+                            let asset_id = subJson["asset_id"].stringValue
+                            let asset_name = subJson["asset_name"].stringValue
+                            let asset_location = subJson["asset_location"].stringValue
+                            let task_date = subJson["task_date"].stringValue
+                            let task_type = subJson["task_type"].stringValue
+                            let task_type_name = subJson["task_type_name"].stringValue
+                            let task_description = subJson["task_description"].stringValue
+                            let created_by = subJson["created_by"].stringValue
+                            let branch_id = subJson["branch_id"].stringValue
+                            let branch_name = subJson["branch_name"].stringValue
+                            let scheduletask_id = subJson["scheduletask_id"].stringValue
+                            let scheduletaskdetil_line = Int32(subJson["scheduletaskdetil_line"].stringValue) ?? 0
+                            let generate_line = Int32(subJson["generate_line"].stringValue) ?? 0
+                            let kode_barcode = subJson["kode_barcode"].stringValue
+                            let task_id = subJson["task_id"].stringValue
+                            
+ 
+                            self.assethistory.append(AssetHistory(
+                                 asset_id: asset_id,
+                                 asset_name: asset_name,
+                                 asset_location: asset_location,
+                                 task_date: task_date,
+                                 task_type: task_type,
+                                 task_type_name: task_type_name,
+                                 task_description: task_description,
+                                 created_by: created_by,
+                                 branch_id: branch_id,
+                                 branch_name: branch_name,
+                                 scheduletask_id: scheduletask_id,
+                                 scheduletaskdetil_line: scheduletaskdetil_line,
+                                 generate_line: generate_line,
+                                 kode_barcode: kode_barcode,
+                                 task_id: task_id
+  
+                                                            ))
+                        }
+                         
+                        
+                         
+                         
+                    } else {
+                        self.responseMessage = message
+                        print("error : \(self.responseMessage)")
+                        self.isCorrect = false
+                        self.isLoading = false
+                        self.showAlert = true
+                    }
+                }
+                
+                
+                
+                
 
             }.resume()
         }

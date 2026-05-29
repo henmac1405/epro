@@ -151,10 +151,31 @@ struct DataBranchUser: Codable {
     var branch_name: String
 }
 
+
 struct TaskScheduleDetil:  Decodable {
     var task_id: String
     var taskdetil_line: Int
     var activity: String
     var value: String
+
+
+struct AssetHistory: Identifiable, Decodable {
+    var id = UUID()
+    var asset_id: String
+    var asset_name: String
+    var asset_location: String
+    var task_date: String
+    var task_type: String
+    var task_type_name: String
+    var task_description: String
+    var created_by: String
+    var branch_id: String
+    var branch_name: String
+    var scheduletask_id: String
+    var scheduletaskdetil_line: Int32
+    var generate_line: Int32
+    var kode_barcode: String
+    var task_id: String
+
 }
 
