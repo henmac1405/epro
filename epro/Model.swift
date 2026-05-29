@@ -157,6 +157,7 @@ struct TaskScheduleDetil:  Decodable {
     var taskdetil_line: Int
     var activity: String
     var value: String
+}
 
 
 struct AssetHistory: Identifiable, Decodable {
