@@ -29,6 +29,7 @@ class Controller : ObservableObject{
     @Published var lustupdate = "20 Mei 2026"
     @Published var newVersion = false
     @Published var input_type = ""
+    @Published var input_type_monthly = ""
     //themes
     @Published var theme_id = 0
     @Published var login_logo = "LOGO_69f36bd92b565.png"
@@ -78,9 +79,10 @@ class Controller : ObservableObject{
 
     @Published var assetsList: [AssetItem] = []
     @Published var dataBranchuser : [DataBranchUser] = []
+
+    @Published var taskscheduleDetil : [TaskScheduleDetil] = []
+
     @Published var assethistory: [AssetHistory] = []
-    
-    
 
     
     @Published var selectedTaskForEdit: Tasks? = nil
@@ -759,6 +761,92 @@ class Controller : ObservableObject{
         }.resume()
     }
     
+    func getInpeksiScheduleMonthly(task_id : String) {
+        let apiname = "task/show-detil-monthly"
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let url = URL(string: self.url_api + apiname) else { return }
+        print(url)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        self.isLoading = true
+        
+        print("task_id/show-detil-monthly : \(task_id)")
+         
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "username", value: self.username),
+            URLQueryItem(name: "task_id", value: task_id),
+        ]
+        
+        request.httpBody = components.query?.data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            
+            if let error = error {
+                print("Error2 :", error.localizedDescription)
+                DispatchQueue.main.async {
+                    self.showAlert = true
+                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            let json = JSON(data)
+            let message = json["message"].stringValue
+            print("json : \(json)")
+            print("message : \(message)")
+            print(json["state"])
+            DispatchQueue.main.async {
+                self.taskscheduleDetil.removeAll()
+                
+                
+                if (json["state"] == true) {
+                    self.isLoading = false
+                     
+                    if let detilArray = json["data"]["detil"].array {
+                        
+                        for subJson in detilArray {
+                            let task_id = subJson["task_id"].stringValue
+                            let taskdetil_line = subJson["taskdetil_line"].intValue
+                            let activity = subJson["taskdetil_activity"].stringValue
+                            let value = subJson["taskdetil_value"].stringValue
+                            
+                            print("aktivitas: \(activity)")
+                             
+                            self.taskscheduleDetil.append(
+                                TaskScheduleDetil(
+                                    task_id: task_id,
+                                    taskdetil_line: taskdetil_line,
+                                    activity: activity,
+                                    value: value
+                                )
+                            )
+                        }
+                    } else {
+                        print("ERROR: Key json['data']['detil'] tidak ditemukan atau bukan bertipe Array")
+                    }
+
+                    
+                } else {
+                    self.responseMessage = message
+                    print("error : \(self.responseMessage)")
+                    self.isCorrect = false
+                    self.isLoading = false
+                    self.showAlert = true
+                }
+            }
+        }.resume()
+    }
+    
     func getInpeksiByUserByID(taskid : String, completion: @escaping () -> Void) {
         let apiname = "task/show-detil"
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
@@ -798,9 +886,9 @@ class Controller : ObservableObject{
             
             let json = JSON(data)
             let message = json["message"].stringValue
-            print("json : \(json)")
-            print("message : \(message)")
-            print(json["state"])
+//            print("json : \(json)")
+//            print("message : \(message)")
+//            print(json["state"])
             DispatchQueue.main.async {
                 self.taskDetil.removeAll()
 //                self.taskPartType.removeAll()
@@ -876,18 +964,14 @@ class Controller : ObservableObject{
                         
                     }
                     
-                    for (_, subJson):(String, JSON) in dataObj["part"] {
-                        let task_id = subJson["task_id"].stringValue
+                    for (_, subJson):(String, JSON) in dataObj["part"] { 
                         let taskpart_name = subJson["taskpart_name"].stringValue
-                        let taskpart_line = subJson["taskpart_line"].intValue
                         let taskpart_type = subJson["taskpart_type"].stringValue
                         let taskpart_qty = subJson["taskpart_qty"].intValue
                         let taskpart_descr = subJson["taskpart_descr"].stringValue
-                        let branch_id = subJson["branch_id"].stringValue
                         
                         print("taskpart_name \(taskpart_name)")
-//                        self.taskPartType.append(TaskPartType(task_id: task_id, taskpart_name: taskpart_name, taskpart_line: taskpart_line, taskpart_type: taskpart_type, taskpart_qty: taskpart_qty,taskpart_descr: taskpart_descr,  branch_id: branch_id))
-                        
+                 
                         self.sparepartList.append(SparepartItem(taskpart_name: taskpart_name, taskpart_qty: taskpart_qty,taskpart_type: taskpart_type, taskpart_descr: taskpart_descr))
                         
                         
@@ -899,84 +983,12 @@ class Controller : ObservableObject{
                     print("error : \(self.responseMessage)")
                     self.isCorrect = false
                     self.isProgress = false
-                    self.showAlert = true
+//                    self.showAlert = true
                 }
             }
         }.resume()
     }
-    
-    func saveInpeksi(task_id : String, task_date : String, task_description : String, task_descriptionafter : String, task_type : String, task_ismonthly : Int,  asset_id : String, branch_id : String, completion: @escaping () -> Void) {
-        let apiname = "task/save"
-        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
-        guard let url = URL(string: self.url_api + apiname) else { return }
-        print(url)
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        
-        self.isLoading = true
-         
-         
-        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
-        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
-        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
-        
-        var components = URLComponents()
-        var queryItems = [
-                URLQueryItem(name: "task_id", value: task_id),
-                URLQueryItem(name: "task_date", value: task_date),
-                URLQueryItem(name: "task_description", value: task_description),
-                URLQueryItem(name: "task_descriptionafter", value: task_descriptionafter),
-                URLQueryItem(name: "task_type", value: task_type),
-                URLQueryItem(name: "task_ismonthly", value: String(task_ismonthly)),
-                URLQueryItem(name: "asset_id", value: asset_id),
-                URLQueryItem(name: "branch_id", value: branch_id),
-                URLQueryItem(name: "username", value: self.username),
-            ]
-            
-            // 2. BARU: Lakukan perulangan (loop) untuk memasukkan isi array spareparts ke queryItems
-            for (index, part) in sparepartList.enumerated() {
-                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_name]", value: part.taskpart_name))
-                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_qty]", value: String(part.taskpart_qty)))
-                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_type]", value: part.taskpart_type))
-                queryItems.append(URLQueryItem(name: "taskpart[\(index)][taskpart_descr]", value: part.taskpart_descr))
-            }
-            
-            // Masukkan semua query items yang digabung ke komponen URL
-        components.queryItems = queryItems
-        
-        request.httpBody = components.query?.data(using: .utf8)
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            
-            if let error = error {
-                print("Error2 :", error.localizedDescription)
-                DispatchQueue.main.async {
-                    self.showAlert = true
-                    self.responseMessage = "Error : \(error.localizedDescription)"
-                    self.isLoading = false
-                }
-                return
-            }
-            
-            guard let data = data else { return }
-            
-            let json = JSON(data)
-            let message = json["message"].stringValue
-            print("json : \(json)")
-            print("message : \(message)")
-            print(json["state"])
-            DispatchQueue.main.async {
-                self.responseMessage = message
-                self.showAlert = true
-                self.isLoading = false
-                if (json["state"] == true) {
-                    completion() 
-                } else {
-                }
-            }
-        }.resume()
-    }
+     
     
     func submitTasksWithImages(
         task_id: String,
@@ -1139,6 +1151,151 @@ class Controller : ObservableObject{
                         }
                     } catch {
                         // Menangkap error jika respons dari server bukan format JSON yang valid (misal teks HTML error)
+                        if let rawResponseString = String(data: dataTemp, encoding: .utf8) {
+                            print("Respons Bukan JSON (Raw Text): \(rawResponseString)")
+                        } else {
+                            print("Gagal mengurai JSON: \(error.localizedDescription)")
+                        }
+                    }
+                }
+            }
+
+        }.resume()
+    }
+    
+    func submitTasksMonthly(
+        task_id: String,
+        task_date: String,
+        task_type: String,
+        task_ismonthly: Int,
+        asset_id: String,
+        branch_id: String,
+        taskscheduleDetil: [TaskScheduleDetil],
+        completion: @escaping ([String: Any]) -> Void
+    ) {
+        // 1. Bersihkan URL, JANGAN kirim query param di URL lagi agar PHP tidak bingung
+        var apiname = ""
+        if self.input_type_monthly == "NEW" {
+              apiname = "task/save-monthly"
+        } else if self.input_type_monthly == "EDIT" {
+              apiname = "task/update-monthly"
+        }
+        
+        self.isProgress = true
+        
+        let timestampWithZ = ISO8601DateFormatter().string(from: Date())
+        guard let completeUrl = URL(string: self.url_api + apiname) else { return }
+        print(completeUrl)
+        var request = URLRequest(url: completeUrl)
+        request.httpMethod = "POST"
+        
+        // Set Header Otentikasi Security
+        request.setValue(self.apiKey, forHTTPHeaderField: "APIKEY")
+        request.setValue(self.token, forHTTPHeaderField: "TOKEN")
+        request.setValue(timestampWithZ, forHTTPHeaderField: "TIMESTAMP")
+        
+        // Set Boundary Multipart
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        
+        // 2. PINDAHKAN SEMUA PARAMETER TEKS KE SINI (MULTIPART BODY)
+        let textParameters: [String: String] = [
+            "task_id": task_id,
+            "task_date": task_date,
+            "task_type": task_type,
+            "task_ismonthly": String(task_ismonthly),
+            "asset_id": asset_id,
+            "branch_id": branch_id,
+            "username": self.username
+        ]
+        print(textParameters)
+        // Bungkus semua teks ke format multipart biner
+        for (key, value) in textParameters {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        
+        // 3.  Taskscheduledetil
+        let taskscheduleDetilArrayMap = taskscheduleDetil.map { item -> [String: Any] in
+            return [
+                "task_id": item.task_id,
+                "taskdetil_line": item.taskdetil_line,
+                "activity": item.activity,
+                "value": item.value
+            ]
+        }
+        print(taskscheduleDetilArrayMap)
+        
+        let jsonString: String
+        if let jsonData = try? JSONSerialization.data(withJSONObject: taskscheduleDetilArrayMap, options: []),
+           let convertedString = String(data: jsonData, encoding: .utf8) {
+            jsonString = convertedString
+        } else {
+            jsonString = "[]"
+        }
+
+        // PERBAIKAN: Menyusun baris multipart biner secara presisi dan bersih
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"taskdetil\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(jsonString)\r\n".data(using: .utf8)!)
+ 
+        
+        // Penutup Akhir Baris Multipart Body
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+        
+        // 5. Eksekusi pengiriman data ke server
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Gagal Koneksi: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.isProgress = false
+                }
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                // 1. Ambil data biner dan pastikan tidak kosong
+                if let dataTemp = data {
+                    do {
+                        // 2. Dekode data biner menjadi Dictionary Swift [String: Any]
+                        if let jsonResponse = try JSONSerialization.jsonObject(with: dataTemp, options: []) as? [String: Any] {
+                            
+                            // 3. Ekstrak nilai dari properti JSON backend Anda
+                            let statusSukses = jsonResponse["state"] as? Bool ?? false
+                            let pesanServer = jsonResponse["message"] as? String ?? "Tidak ada pesan"
+                            let kodeServer = jsonResponse["code"] as? Int ?? httpResponse.statusCode
+                            
+                            completion(jsonResponse)
+                            
+                            DispatchQueue.main.async {
+                                self.isProgress = false
+                            }
+                            
+                            
+                            print("================ RESPONS JSON SERVER ================")
+                            print("State: \(statusSukses)")
+                            print("Code: \(kodeServer)")
+                            print("Message: \(pesanServer)")
+                            print("====================================================")
+                            
+                            // 4. Cek validasi berdasarkan state dari backend, bukan cuma status code HTTP
+                            if statusSukses && (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) {
+                                print("🎉 BERHASIL! Server SQL Server sukses menyimpan seluruh data!")
+                                 
+                                DispatchQueue.main.async {
+                                    //self.taskImage.removeAll()
+                                    // Anda bisa mengosongkan list sparepart juga di sini jika diperlukan:
+                                    // self.sparepartList.removeAll()
+                                }
+                            } else {
+                                print("Gagal Validasi Backend: \(pesanServer)")
+                            }
+                        }
+                    } catch {
                         if let rawResponseString = String(data: dataTemp, encoding: .utf8) {
                             print("Respons Bukan JSON (Raw Text): \(rawResponseString)")
                         } else {
@@ -1440,7 +1597,7 @@ class Controller : ObservableObject{
     }
 
     
-    func getTaskType() {
+    func getTaskType(param : String) {
         let apiname = "task/type"
         let timestampWithZ = ISO8601DateFormatter().string(from: Date())
         guard let url = URL(string: self.url_api + apiname) else { return }
@@ -1458,7 +1615,7 @@ class Controller : ObservableObject{
         
         var components = URLComponents()
         components.queryItems = [
-            URLQueryItem(name: "PARAM", value: "0"),
+            URLQueryItem(name: "PARAM", value: param),
         ]
         
         request.httpBody = components.query?.data(using: .utf8)
@@ -1949,9 +2106,9 @@ class Controller : ObservableObject{
                 
                 let json = JSON(data)
                 let message = json["message"].stringValue
-                print("json : \(json)")
-                print("message : \(message)")
-                print(json["state"])
+//                print("json : \(json)")
+//                print("message : \(message)")
+//                print(json["state"])
                 
                 
                 DispatchQueue.main.async {

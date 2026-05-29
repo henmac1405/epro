@@ -1,8 +1,7 @@
 import SwiftUI
 import AVFoundation
 
-struct QRScannerView: UIViewControllerRepresentable {
-    // Menampung callback untuk mengirim teks hasil scan ke layar utama
+struct QRScannerView: UIViewControllerRepresentable { 
     var onScanResult: (String) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -29,21 +28,18 @@ struct QRScannerView: UIViewControllerRepresentable {
             if let metadataObject = metadataObjects.first {
                 guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
                 guard let stringValue = readableObject.stringValue else { return }
-                
-                // Memicu haptic feedback (getaran halus) sebagai penanda sukses scan
+                 
                 AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
-                
-                // Mengirim hasil string barcode/QR ke fungsi utama
+                 
                 DispatchQueue.main.async {
                     self.parent.onScanResult(stringValue)
-                    self.parent.dismiss() // Tutup popup scanner otomatis
+                    self.parent.dismiss()
                 }
             }
         }
     }
 }
-
-// UIViewController UIKit untuk mengelola session kamera live
+ 
 class QRScannerViewController: UIViewController {
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
@@ -74,7 +70,6 @@ class QRScannerViewController: UIViewController {
         if (captureSession.canAddOutput(metadataOutput)) {
             captureSession.addOutput(metadataOutput)
             metadataOutput.setMetadataObjectsDelegate(delegate, queue: DispatchQueue.main)
-            // Mendukung deteksi Kode QR, Barcode EAN13, Code128, dan Code39 secara serentak
             metadataOutput.metadataObjectTypes = [.qr, .ean13, .code128, .code39]
         } else {
             return
@@ -84,8 +79,7 @@ class QRScannerViewController: UIViewController {
         previewLayer.frame = view.layer.bounds
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
-
-        // Jalankan kamera di background thread
+ 
         DispatchQueue.global(qos: .background).async {
             self.captureSession.startRunning()
         }

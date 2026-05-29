@@ -65,8 +65,7 @@ struct HomeView: View {
                                                     .cornerRadius(16)
                                                     .padding(.horizontal, 16)
                                                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                                            } else {
-                                                // Sediakan placeholder agar layout tidak melompat-lompat saat loading
+                                            } else { 
                                                 RoundedRectangle(cornerRadius: 16)
                                                     .fill(Color.gray.opacity(0.1))
                                                     .frame(height: 220)
@@ -88,7 +87,6 @@ struct HomeView: View {
                                         case "USER":
                                             UserView()
                                         case "INPUT INPEKSI":
-                                            // Berikan id unik agar siklus hidup (lifecycle) View Input Foto terisolasi dengan aman
                                             InpeksiInputView()
                                                 .id("input-inpeksi-view-stable")
                                         default:
@@ -147,7 +145,7 @@ struct HomeView: View {
             controller.pageName = "HOME"
             loadConfigOld()
             self.controller.getBranchByUser()
-            self.controller.getTaskType()
+            self.controller.getTaskType(param : "0")
             self.controller.getPartType()
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
         }
@@ -156,20 +154,17 @@ struct HomeView: View {
         .overlay {
             if controller.isProgress {
                 ZStack {
-                    // 1. Latar belakang gelap transparan untuk mengunci layar belakang
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
-                    
-                    // 2. Struktur Kotak Dialog Pop-up
+                     
                     VStack(spacing: 20) {
-                        
-                        // Animasi loading putar yang ingin Anda tampilkan
+                         
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle())
                             .controlSize(.regular)
                             .scaleEffect(2.5)
                             .tint(primaryPurple)
-                    } 
+                    }
                     .frame(width: 100, height: 100)
                     .background(Color.white)
                     .cornerRadius(14)
@@ -180,8 +175,7 @@ struct HomeView: View {
         }
         
     }
-    
-    // Fungsi Eksekusi Aksi Tombol Keluar
+     
     private func prosesLogout() {
         print("Sesi akun ditutup, mengalihkan halaman...")
         controller.isLoggedIn = false
@@ -285,7 +279,6 @@ struct MainGridMenuButton: View {
     
     var body: some View {
         VStack(spacing: 14) {
-            // Ikon Kotak Ungu di dalam
             ZStack {
                 RoundedRectangle(cornerRadius: 22)
                     .fill(Color.fromRGBAString(self.controller.main_menu_color))
@@ -299,8 +292,7 @@ struct MainGridMenuButton: View {
                     .frame(width: 50, height: 50)
             }
             .padding(.top, 14)
-            
-            // Label Teks di bawah kotak ikon
+             
             Text(title)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.black.opacity(0.8))
@@ -313,8 +305,7 @@ struct MainGridMenuButton: View {
         .cornerRadius(18)
     }
 }
-
-// Komponen Elemen Navigasi Bar Bawah (Bottom Bar Item)
+ 
 struct BottomTabItem: View {
     let icon: String
     let title: String
@@ -324,7 +315,6 @@ struct BottomTabItem: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                // Penyesuaian khusus simbol kustom untuk tombol logout panah keluar
                 Image(systemName: icon == "arrow.right.isActive" ? "rectangle.portrait.and.arrow.right" : icon)
                     .font(.system(size: 20, weight: .medium))
                 

@@ -31,7 +31,7 @@ struct CeklistBulananView: View {
     
     
     @State private var showDatePicker = false
-    @State private var tempSelectedDate = Date()   // untuk popup
+    @State private var tempSelectedDate = Date()    
 
 
     @State private var itemsPerPage = 5
@@ -64,7 +64,7 @@ struct CeklistBulananView: View {
                         
                            Button(branch.branch_name) {
                                selectedLocation = branch.branch_name
-                               selectedBranchID = branch.branch_id   // simpan id untuk API berikutnya
+                               selectedBranchID = branch.branch_id
                              
                                controller.getCeklistbulanan(
                                 branchID: branch.branch_id,
@@ -164,7 +164,7 @@ struct CeklistBulananView: View {
                             .frame(maxWidth: .infinity)
                         }
                     }
-                    .presentationDetents([.medium]) // optional
+                    .presentationDetents([.medium])
                 }
                 
                 .onTapGesture {
@@ -248,33 +248,48 @@ struct CeklistBulananView: View {
                 .padding(.horizontal, 16)
                  
                 VStack(spacing: 0) {
+                    ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 0) {
                         Text("Aksi")
                             .frame(width: 60, alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                         Text("Asset ID")
                             .frame(width: 90, alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                         Text("Nama Asset")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(width: 150, alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                         Text("Area/Lantai")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(width: 150, alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                         Text("Cycle/m")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(width: 70,  alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                         Text("Bulan Pengecekan")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(width: 150, alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                         Text("Status")
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(width: 100, alignment: .leading)
+                            .foregroundColor(.black)
+                            .padding(.leading, 10)
                     }
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(Color(.white))
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
                     .background(Color.fromRGBAString(self.controller.main_table_col_color))
                    
                     
                     Divider()
                      
                    
-                    ScrollView(.vertical, showsIndicators: false) {
+                   
                         VStack(spacing: 0) {
                             
                             ForEach(self.trxOnCurrentPage) { item in
@@ -283,8 +298,27 @@ struct CeklistBulananView: View {
             
                     
                                     Button {
+                                        
+                                        let taskMapped = Tasks(
+                                                task_id: item.task_id,  
+                                                task_date: "",
+                                                task_description: "",
+                                                task_descriptionafter:  "",
+                                                task_type: "",
+                                                task_ismonthly: 1,
+                                                asset_id: item.asset_id,
+                                                branch_id: item.branch_id
+                                            )
+                                             
+                                            self.controller.selectedTaskForEdit = taskMapped
+                                        self.controller.input_type = "MONTHLY"
+                                        
                                         self.controller.pageName = "INPUT INPEKSI"
-                                      
+                                        if item.curr_status == "Belum Dicek" {
+                                            self.controller.input_type_monthly = "NEW"
+                                        } else {
+                                            self.controller.input_type_monthly = "EDIT"
+                                        }
                                     } label: {
                                         Image(systemName: "qrcode")
                                             .font(.system(size: 22, weight: .medium))
@@ -298,42 +332,43 @@ struct CeklistBulananView: View {
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
                                         .frame(width: 90, alignment: .leading)
-                                     
+                                        .padding(.leading, 10)
                                     Text(item.asset_name)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(width: 150, alignment: .leading)
                                         .lineLimit(1)
+                                        .padding(.leading, 10)
                                     Text(item.asset_location)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(width: 150, alignment: .leading)
                                         .lineLimit(1)
-                                    
+                                        .padding(.leading, 10)
                                     Text(item.scheduletaskdetil_cycle)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(width: 70, alignment: .leading)
                                         .lineLimit(1)
-                                    
+                                        .padding(.leading, 10)
                                     Text(item.curr_periode_start)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(width: 150, alignment: .leading)
                                         .lineLimit(1)
-                                    
+                                        .padding(.leading, 10)
                                     Text(item.curr_status)
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.black.opacity(0.8))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(width: 100,  alignment: .leading)
                                         .lineLimit(1)
-                                    
+                                        .padding(.leading, 10)
                                     
 
                                     
                                 }
+                                .padding(.horizontal, 24)
                                 .padding(.vertical, 16)
-                                .padding(.horizontal, 16)
                                 
                                 Divider()
                             }
@@ -368,7 +403,7 @@ struct CeklistBulananView: View {
             
         }
         .onAppear() {
-
+            self.controller.getTaskType(param : "1")
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"

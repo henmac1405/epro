@@ -78,7 +78,9 @@ struct InpeksiInputView: View {
     @State private var tempFotoSetelah: UIImage? = nil
     
     var body: some View {
+        
         ZStack {
+            
             VStack(spacing: 0) {
                 HStack {
                     Button(action: { dismiss() }) {
@@ -106,7 +108,7 @@ struct InpeksiInputView: View {
                     VStack(spacing: 16) {
                         
                         // 2. BAR PENCARIAN ASET & TOMBOL SCAN QR (Horizontal)
-                        if self.controller.input_type != "HISTORY" {
+                        if self.controller.input_type == "NEW" || self.controller.input_type == "EDIT" || self.controller.input_type == "MONTHLY" {
                             HStack(spacing: 12) {
                                 
                                 HStack {
@@ -311,7 +313,7 @@ struct InpeksiInputView: View {
                         .padding(.horizontal, 16)
                         
                         // 7. TOMBOL UNGHAH FOTO SEBELUM PEKERJAAN
-                        if self.controller.input_type != "HISTORY" {
+                        if self.controller.input_type == "NEW" || self.controller.input_type == "EDIT" {
                             Button(action: {
                                 self.showPhotoOptions = true
                             }) {
@@ -340,80 +342,75 @@ struct InpeksiInputView: View {
                                 Button("Batal", role: .cancel) { }
                             }
                         }
-                    
-                        if !self.filteredTaskImageSebelum.isEmpty {
-                            LazyVGrid(columns: menuColumns, spacing: 5) {
-                                ForEach(self.filteredTaskImageSebelum) { item in
-                                    ZStack(alignment: .topTrailing) {
-                                        Image(uiImage: item.image)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(height: 200)
-                                            .frame(maxWidth: UIScreen.main.bounds.width * 0.45, alignment: .leading)
-                                            .clipped()
-                                            .cornerRadius(8)
-                                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-                                            .onTapGesture {
-                                                self.fotoTerpilihUntukZoom = item
+                        
+                        if self.controller.input_type != "MONTHLY" {
+                            if !self.filteredTaskImageSebelum.isEmpty {
+                                LazyVGrid(columns: menuColumns, spacing: 5) {
+                                    ForEach(self.filteredTaskImageSebelum) { item in
+                                        ZStack(alignment: .topTrailing) {
+                                            Image(uiImage: item.image)
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(height: 200)
+                                                .frame(maxWidth: UIScreen.main.bounds.width * 0.45, alignment: .leading)
+                                                .clipped()
+                                                .cornerRadius(8)
+                                                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                                                .onTapGesture {
+                                                    self.fotoTerpilihUntukZoom = item
+                                                }
+                                            Button(action: {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    self.controller.taskImage.removeAll(where: { $0.id == item.id })
+                                                }
+                                            }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(Color.black.opacity(0.7))
+                                                    .background(Color.white.clipShape(Circle()))
+                                                    .padding(4)
                                             }
-                                        Button(action: {
-                                            withAnimation(.easeInOut(duration: 0.2)) {
-                                                self.controller.taskImage.removeAll(where: { $0.id == item.id })
-                                            }
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 22))
-                                                .foregroundColor(Color.black.opacity(0.7))
-                                                .background(Color.white.clipShape(Circle()))
-                                                .padding(4)
+                                            .buttonStyle(PlainButtonStyle())
                                         }
-                                        .buttonStyle(PlainButtonStyle())
                                     }
                                 }
-                            }
-                        }
-
-
- 
-                            else {
+                            } else {
                                 Text("Belum ada foto sebelum pekerjaan")
                                     .font(.system(size: 14, weight: .medium))
                                     .foregroundColor(.gray.opacity(0.8))
                                     .padding(.top, 4)
                             }
-//                            
-//                        }
-                        
-                        
-                        // 9. TEXT EDITOR DESKRIPSI SEBELUM PEKERJAAN
-                        VStack(alignment: .leading, spacing: 0) {
-                            ZStack(alignment: .topLeading) {
-                                if deskripsiPekerjaan.isEmpty {
-                                    Text("Deskripsi Sebelum Pekerjaan")
-                                        .foregroundColor(.gray.opacity(0.6))
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 8)
+                             
+                            // 9. TEXT EDITOR DESKRIPSI SEBELUM PEKERJAAN
+                            VStack(alignment: .leading, spacing: 0) {
+                                ZStack(alignment: .topLeading) {
+                                    if deskripsiPekerjaan.isEmpty {
+                                        Text("Deskripsi Sebelum Pekerjaan")
+                                            .foregroundColor(.gray.opacity(0.6))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 8)
+                                    }
+                                    
+                                    TextEditor(text: $deskripsiPekerjaan)
+                                        .font(.system(size: 16))
+                                        .frame(minHeight: 100)
+                                        .opacity(deskripsiPekerjaan.isEmpty ? 0.8 : 1)
+                                        .autocapitalization(.none)
+                                        .autocorrectionDisabled(true)
                                 }
-                                
-                                TextEditor(text: $deskripsiPekerjaan)
-                                    .font(.system(size: 16))
-                                    .frame(minHeight: 100)
-                                    .opacity(deskripsiPekerjaan.isEmpty ? 0.8 : 1)
-                                    .autocapitalization(.none)
-                                    .autocorrectionDisabled(true)
+                                .padding(12)
                             }
-                            .padding(12)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                            )
+                            .padding(.horizontal, 16)
                         }
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 16)
                         
                         // 10. TOMBOL UNGGAH FOTO SETELAH PEKERJAAN
-                        if self.controller.input_type != "HISTORY" {
+                        if self.controller.input_type == "NEW" || self.controller.input_type == "EDIT" {
                             Button(action: {
                                 self.showPhotoOptionsSetelah = true
                             }) {
@@ -443,8 +440,8 @@ struct InpeksiInputView: View {
                                 Button("Batal", role: .cancel) { }
                             }
                         }
-                         
-                        if !self.filteredTaskImageSetelah.isEmpty {
+                        if self.controller.input_type != "MONTHLY" {
+                            if !self.filteredTaskImageSetelah.isEmpty {
                                 LazyVGrid(columns: menuColumns, spacing: 5) {
                                     ForEach(self.filteredTaskImageSetelah) { item in
                                         HStack {
@@ -482,39 +479,37 @@ struct InpeksiInputView: View {
                                     .foregroundColor(.gray.opacity(0.8))
                                     .padding(.top, 4)
                             }
-//                        }
-                        
-                        
-                        // 12. TEXT EDITOR DESKRIPSI SETELAH PEKERJAAN
-                        VStack(alignment: .leading, spacing: 0) {
-                            ZStack(alignment: .topLeading) {
-                                if deskripsiSetelahPekerjaan.isEmpty {
-                                    Text("Deskripsi Setelah Pekerjaan")
-                                        .foregroundColor(.gray.opacity(0.6))
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 8)
+                            
+                            VStack(alignment: .leading, spacing: 0) {
+                                ZStack(alignment: .topLeading) {
+                                    if deskripsiSetelahPekerjaan.isEmpty {
+                                        Text("Deskripsi Setelah Pekerjaan")
+                                            .foregroundColor(.gray.opacity(0.6))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 8)
+                                        
+                                    }
                                     
+                                    TextEditor(text: $deskripsiSetelahPekerjaan)
+                                        .font(.system(size: 16))
+                                        .frame(minHeight: 100)
+                                        .opacity(deskripsiSetelahPekerjaan.isEmpty ? 0.8 : 1)
+                                        .autocapitalization(.none)
+                                        .autocorrectionDisabled(true)
                                 }
-                                
-                                TextEditor(text: $deskripsiSetelahPekerjaan)
-                                    .font(.system(size: 16))
-                                    .frame(minHeight: 100)
-                                    .opacity(deskripsiSetelahPekerjaan.isEmpty ? 0.8 : 1)
-                                    .autocapitalization(.none)
-                                    .autocorrectionDisabled(true)
+                                .padding(12)
                             }
-                            .padding(12)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                            )
+                            .padding(.horizontal, 16)
                         }
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 16)
                         
                         // 13. TOMBOL TAMBAH SPAREPART (Picu munculnya popup sheet)
-                        if self.controller.input_type != "HISTORY" {
+                        if self.controller.input_type == "NEW" || self.controller.input_type == "EDIT" {
                             Button(action: {
                                 self.showTambahSparepart = true
                             }) {
@@ -535,131 +530,216 @@ struct InpeksiInputView: View {
                             
                         }
                         // 14. LIST DATA SPAREPART
-                        if !self.controller.sparepartList.isEmpty {
-                            VStack(spacing: 12) {
-                                LazyVGrid(columns: menuColumns, spacing: 5) {
-                                    ForEach(self.controller.sparepartList) { item in
-                                        let taskpart_type_name = self.controller.filtePartType(id: item.taskpart_type)
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 6) {
-                                                // Judul Utama (Nama Item & Qty)
-                                                Text("\(item.taskpart_name) (\(item.taskpart_qty) Pcs)")
-                                                    .font(.system(size: 16, weight: .bold))
-                                                    .foregroundColor(.black)
-                                                
-                                                // Tipe Pekerjaan
-                                                Text("Tipe: \(taskpart_type_name)")
-                                                    .font(.system(size: 16, weight: .medium))
-                                                    .foregroundColor(.black.opacity(0.8))
-                                                    .lineSpacing(4)
-                                                
-                                                // Deskripsi atau Tipe Pekerjaan
-                                                Text(item.taskpart_descr)
-                                                    .font(.system(size: 16, weight: .medium))
-                                                    .foregroundColor(.black.opacity(0.8))
-                                                    .lineSpacing(4)
-                                                Text("")
-                                                    .font(.system(size: 16, weight: .medium))
-                                                    .foregroundColor(.black.opacity(0.8))
-                                                    .lineSpacing(4)
-                                                
-                                                // Tombol Edit Bundar Ungu di Pojok Kanan Bawah
-                                                HStack {
-                                                    Spacer()
-                                                    Button(action: {
-                                                        print("Mengedit sparepart: \(item.taskpart_name)")
-                                                        self.sparepartYangSedangDiedit = item
-                                                        self.showTambahSparepart = true
-                                                    }) {
-                                                        ZStack {
-                                                            Circle()
-                                                                .fill(primaryPurple)
-                                                                .frame(width: 32, height: 32)
-                                                            Image(systemName: "pencil")
-                                                                .foregroundColor(.white)
-                                                                .font(.system(size: 14, weight: .bold))
+                        
+                        if self.controller.input_type != "MONTHLY" {
+                            if !self.controller.sparepartList.isEmpty {
+                                VStack(spacing: 12) {
+                                    LazyVGrid(columns: menuColumns, spacing: 5) {
+                                        ForEach(self.controller.sparepartList) { item in
+                                            let taskpart_type_name = self.controller.filtePartType(id: item.taskpart_type)
+                                            HStack {
+                                                VStack(alignment: .leading, spacing: 6) {
+                                                    // Judul Utama (Nama Item & Qty)
+                                                    Text("\(item.taskpart_name) (\(item.taskpart_qty) Pcs)")
+                                                        .font(.system(size: 16, weight: .bold))
+                                                        .foregroundColor(.black)
+                                                    
+                                                    // Tipe Pekerjaan
+                                                    Text("Tipe: \(taskpart_type_name)")
+                                                        .font(.system(size: 16, weight: .medium))
+                                                        .foregroundColor(.black.opacity(0.8))
+                                                        .lineSpacing(4)
+                                                    
+                                                    // Deskripsi atau Tipe Pekerjaan
+                                                    Text(item.taskpart_descr)
+                                                        .font(.system(size: 16, weight: .medium))
+                                                        .foregroundColor(.black.opacity(0.8))
+                                                        .lineSpacing(4)
+                                                    Text("")
+                                                        .font(.system(size: 16, weight: .medium))
+                                                        .foregroundColor(.black.opacity(0.8))
+                                                        .lineSpacing(4)
+                                                     
+                                                    HStack {
+                                                        Spacer()
+                                                        Button(action: {
+                                                            print("Mengedit sparepart: \(item.taskpart_name)")
+                                                            self.sparepartYangSedangDiedit = item
+                                                            self.showTambahSparepart = true
+                                                        }) {
+                                                            ZStack {
+                                                                Circle()
+                                                                    .fill(primaryPurple)
+                                                                    .frame(width: 32, height: 32)
+                                                                Image(systemName: "pencil")
+                                                                    .foregroundColor(.white)
+                                                                    .font(.system(size: 14, weight: .bold))
+                                                            }
                                                         }
+                                                        .buttonStyle(PlainButtonStyle())
                                                     }
-                                                    .buttonStyle(PlainButtonStyle())
+                                                    .padding(.top, -10)
+                                                    
                                                 }
-                                                .padding(.top, -10)
-                                                
+                                                Spacer()
                                             }
-                                            Spacer()
+                                            .padding(.horizontal, 10)
+                                            .padding(.top, 16)
+                                            .padding(.bottom, 12)
+                                            .frame(maxWidth: UIScreen.main.bounds.width * 0.45, alignment: .leading)
+                                            .background(Color.white)
+                                            .cornerRadius(16)
+                                            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal, 10)
                                         }
-                                        .padding(.horizontal, 10)
-                                        .padding(.top, 16)
-                                        .padding(.bottom, 12)
-                                        .frame(maxWidth: UIScreen.main.bounds.width * 0.45, alignment: .leading)
-                                        .background(Color.white)
-                                        .cornerRadius(16)
-                                        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.horizontal, 10)
                                     }
                                 }
+                                .padding(.top, 10)
+                            } else {
+                                // JIKA KOSONG: Tampilkan pesan status default lama Anda
+                                Text("Belum ada data sparepart yang dipakai dalam pekerjaan")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.gray.opacity(0.6))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 24)
+                                    .padding(.top, 4)
                             }
-                            .padding(.top, 10)
-                        } else {
-                            // JIKA KOSONG: Tampilkan pesan status default lama Anda
-                            Text("Belum ada data sparepart yang dipakai dalam pekerjaan")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.gray.opacity(0.6))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
-                                .padding(.top, 4)
+                        }
+                        // LIST SCHEDULE ASSET ====================================================================================
+                        
+                        if self.controller.input_type == "MONTHLY" {
+                            
+                            if self.controller.taskscheduleDetil.count > 0 {
+                                VStack(spacing: 16) {
+//                                    Color(.gray).opacity(0.01)
+                                    ForEach(self.controller.taskscheduleDetil.indices, id: \.self) { index in
+                                        let currentItem = self.controller.taskscheduleDetil[index]
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("\(currentItem.activity)")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundColor(.black.opacity(0.8))
+                                                .lineSpacing(4)
+                                            TextEditor(text: self.$controller.taskscheduleDetil[index].value)
+                                                .font(.system(size: 15))
+                                                .frame(minHeight: 80)
+                                                .padding(6)
+                                                .background(Color.white)
+                                                .cornerRadius(8)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                                )
+                                                .autocapitalization(.none)
+                                                .autocorrectionDisabled(true)
+                                        }
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        
+                                        if index < self.controller.taskscheduleDetil.count - 1 {
+                                            Divider()
+                                                .padding(.horizontal, 16)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 12)
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(12)
+//                                .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
+                                .padding(.horizontal, 16)
+
+                            } else {
+                                // JIKA KOSONG: Tampilkan pesan status default
+                                Text("Tidak ada data check list pekerjaan untuk asset ini")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.gray.opacity(0.6))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 24)
+                                    .padding(.top, 4)
+                            }
                         }
                         
-                        
                         // 15. TOMBOL UTAMA "SIMPAN" DATA INSPEKSI
-                        if self.controller.input_type != "HISTORY" {
-                            Button(action: {
-                                if asset_id == "" {
-                                    self.controller.toastShow(message: "Data Gagal Disimpan, anda belum memilih Asset", style: .error)
-                                } else if selectedBranchID == "" {
-                                    self.controller.toastShow(message: "Data Gagal Disimpan, anda belum memilih Branch", style: .error)
-                                } else if selectedTaskTypeID == "" {
-                                    self.controller.toastShow(message: "Gagal menyimpan, anda belum memilih jenis pekerjaan", style: .error)
-                                } else if taskDate == "" {
-                                    self.controller.toastShow(message: "Gagal menyimpan, anda belum memilih Tanggal pekerjaan", style: .error)
-                                } else {
-                                    self.controller.submitTasksWithImages(task_id: task_id, task_date: taskDate, task_description: deskripsiPekerjaan, task_descriptionafter: deskripsiSetelahPekerjaan, task_type: selectedTaskTypeID, task_ismonthly: 0, asset_id: asset_id, branch_id: selectedBranchID, spareparts: self.controller.sparepartList)
-                                    { jsonResult in
-                                        
-                                        let state = jsonResult["state"] as? Bool ?? false
-                                        let message = jsonResult["message"] as? String ?? "Terjadi kesalahan"
-                                        
-                                        
-                                        DispatchQueue.main.async {
-                                            if state {
-                                                print("Pesan Sukses Server: \(message)")
-                                                // if let responseData = jsonResult["data"] as? [String: Any] {
-                                                //     let newId = responseData["task_id"] as? String ?? ""
-                                                //     print("ID Baru yang dibuat Server: \(newId)")
-                                                // }
-                                                self.controller.toastShow(message: "Data Berhasil Disimpan", style: .success)
-                                                withAnimation(.easeInOut) {
-                                                    self.controller.pageName = "INPEKSI"
+                        if self.controller.input_type == "NEW" || self.controller.input_type == "EDIT" || self.controller.input_type == "MONTHLY" {
+                            if self.controller.input_type == "MONTHLY" && self.task_id == "" {
+                                
+                            } else {
+                                Button(action: {
+                                    if asset_id == "" {
+                                        self.controller.toastShow(message: "Data Gagal Disimpan, anda belum memilih Asset", style: .error)
+                                    } else if selectedBranchID == "" {
+                                        self.controller.toastShow(message: "Data Gagal Disimpan, anda belum memilih Branch", style: .error)
+                                    } else if selectedTaskTypeID == "" {
+                                        self.controller.toastShow(message: "Gagal menyimpan, anda belum memilih jenis pekerjaan", style: .error)
+                                    } else if taskDate == "" {
+                                        self.controller.toastShow(message: "Gagal menyimpan, anda belum memilih Tanggal pekerjaan", style: .error)
+                                    } else if self.controller.input_type == "MONTHLY" {
+                                        self.controller.submitTasksMonthly(task_id: task_id, task_date: taskDate, task_type: selectedTaskTypeID, task_ismonthly: 1, asset_id: asset_id, branch_id: selectedBranchID, taskscheduleDetil: self.controller.taskscheduleDetil)
+                                        {
+                                            jsonResult in
+                                            
+                                            let state = jsonResult["state"] as? Bool ?? false
+                                            let message = jsonResult["message"] as? String ?? "Terjadi kesalahan"
+                                            
+                                            
+                                            DispatchQueue.main.async {
+                                                if state {
+                                                    print("Pesan Sukses Server: \(message)")
+                                                    // if let responseData = jsonResult["data"] as? [String: Any] {
+                                                    //     let newId = responseData["task_id"] as? String ?? ""
+                                                    //     print("ID Baru yang dibuat Server: \(newId)")
+                                                    // }
+                                                    self.controller.toastShow(message: "Data Berhasil Disimpan", style: .success)
+                                                    withAnimation(.easeInOut) {
+                                                        self.controller.pageName = "CEKLIST BULANAN"
+                                                    }
+                                                } else {
+                                                    self.controller.toastShow(message: "Data Gagal Disimpan", style: .error)
+                                                    print("Gagal Menyimpan Form: \(message)")
                                                 }
-                                            } else {
-                                                self.controller.toastShow(message: "Data Gagal Disimpan", style: .error)
-                                                print("Gagal Menyimpan Form: \(message)")
+                                            }
+                                        }
+                                    
+                                    } else {
+                                        self.controller.submitTasksWithImages(task_id: task_id, task_date: taskDate, task_description: deskripsiPekerjaan, task_descriptionafter: deskripsiSetelahPekerjaan, task_type: selectedTaskTypeID, task_ismonthly: 0, asset_id: asset_id, branch_id: selectedBranchID, spareparts: self.controller.sparepartList)
+                                        {
+                                            jsonResult in
+                                            
+                                            let state = jsonResult["state"] as? Bool ?? false
+                                            let message = jsonResult["message"] as? String ?? "Terjadi kesalahan"
+                                            
+                                            
+                                            DispatchQueue.main.async {
+                                                if state {
+                                                    print("Pesan Sukses Server: \(message)")
+                                                    // if let responseData = jsonResult["data"] as? [String: Any] {
+                                                    //     let newId = responseData["task_id"] as? String ?? ""
+                                                    //     print("ID Baru yang dibuat Server: \(newId)")
+                                                    // }
+                                                    self.controller.toastShow(message: "Data Berhasil Disimpan", style: .success)
+                                                    withAnimation(.easeInOut) {
+                                                        self.controller.pageName = "INPEKSI"
+                                                    }
+                                                } else {
+                                                    self.controller.toastShow(message: "Data Gagal Disimpan", style: .error)
+                                                    print("Gagal Menyimpan Form: \(message)")
+                                                }
                                             }
                                         }
                                     }
+                                }) {
+                                    Text("SIMPAN")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 52)
+                                        .background(primaryPurple)
+                                        .cornerRadius(12)
                                 }
-                            }) {
-                                Text("SIMPAN")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 52)
-                                    .background(primaryPurple)
-                                    .cornerRadius(12)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 24)
+                                .padding(.bottom, 20)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 24)
-                            .padding(.bottom, 20)
                         }
                     }
                 }
@@ -669,26 +749,33 @@ struct InpeksiInputView: View {
         }
         
         .onAppear() {
+            self.controller.taskscheduleDetil.removeAll()
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
             if let taskToEdit = controller.selectedTaskForEdit {
+                
                 self.task_id = taskToEdit.task_id
-                self.taskDate = taskToEdit.task_date
+                print("task_id : \(self.task_id)")
                 self.deskripsiPekerjaan = taskToEdit.task_description
                 self.selectedBranchID = taskToEdit.branch_id
                 self.selectedBranch = controller.filterBranch(branchid: selectedBranchID)
-                self.selectedTaskTypeID = taskToEdit.task_type
-                self.selectedJenisPekerjaan = controller.filteTaskType(id: selectedTaskTypeID)
-                
-                
+                 
                 controller.getInpeksiByUserByID(taskid: taskToEdit.task_id){
                     self.findAsset(barcode : self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].kode_barcode : "")
                     self.searchAsset = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].kode_barcode : ""
                     self.asset_image = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].asset_image : ""
                     self.deskripsiSetelahPekerjaan = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_descriptionafter : ""
-                     
-                    
+                    self.selectedTaskTypeID = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_type : ""
+                    self.selectedJenisPekerjaan = controller.filteTaskType(id: self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_type : "")
+                    print("selectedTaskTypeID : \(self.selectedTaskTypeID)")
+                    print("selectedJenisPekerjaan : \(self.selectedJenisPekerjaan)")
+                    self.taskDate = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_date : ""
                     print(self.controller.imageAssetUrl + self.asset_image)
                     
+                    // checklist monthly
+                    if self.controller.taskDetil[0].task_ismonthly == 1 {
+                        
+                        self.controller.getInpeksiScheduleMonthly(task_id: taskToEdit.task_id)
+                    }
                 }
                 
             }
