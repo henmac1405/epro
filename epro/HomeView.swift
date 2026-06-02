@@ -71,13 +71,11 @@ struct HomeView: View {
                                                     .frame(maxWidth: .infinity)
                                                     .frame(height: 220)
                                                     .cornerRadius(16)
-                                                    .padding(.horizontal, 16)
                                                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                                             } else { 
                                                 RoundedRectangle(cornerRadius: 16)
                                                     .fill(Color.gray.opacity(0.1))
                                                     .frame(height: 220)
-                                                    .padding(.horizontal, 16)
                                             }
                                         }
                                 
@@ -103,12 +101,14 @@ struct HomeView: View {
                             }
                             
                         }
+                        .padding(.horizontal, 50)
                         .padding(.top, -150)
                         .padding(.bottom, 100)
                          
                         
                     }
                 }
+                
                 // scroll end
                 
                 VStack {
@@ -139,6 +139,7 @@ struct HomeView: View {
                     .padding(.bottom, 12)
                 }
             }
+            
         }
         // ALERT DIALOG KONFIRMASI LOGOUT
         .alert("Konfirmasi Logout", isPresented: $showLogoutAlert) {
@@ -311,7 +312,6 @@ struct MenuView : View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(.horizontal, 16)
         .padding(.vertical, 20)
         .background(Color.white)
         .cornerRadius(24)
