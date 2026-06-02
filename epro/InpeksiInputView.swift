@@ -890,48 +890,54 @@ struct InpeksiInputView: View {
                 }
             }
         }
-        .onChange(of: tempFotoSebelum) { oldValue, newValue in
+        .onChange(of: tempFotoSebelum) { newValue in
             if let fotoBaru = newValue {
                 Task {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        self.controller.taskImage.append(
-                            TaskImage(
-                                task_id: "tasksid",
-                                taskimage_type: "1",
-                                taskimage_line: 10,
-                                taskimage_name: "foto_sebelum_\(Date().timeIntervalSince1970).jpg",
-                                branch_id: self.controller.branch_id,
-                                image: fotoBaru
-                            )
-                        )
-                    } 
+                    // Karena dijalankan di dalam Task nirkabel (asynchronous),
+                    // pastikan perubahan UI (withAnimation) dilakukan di Main Thread
                     await MainActor.run {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            self.controller.taskImage.append(
+                                TaskImage(
+                                    task_id: "tasksid",
+                                    taskimage_type: "1",
+                                    taskimage_line: 10,
+                                    taskimage_name: "foto_sebelum_\(Date().timeIntervalSince1970).jpg",
+                                    branch_id: self.controller.branch_id,
+                                    image: fotoBaru
+                                )
+                            )
+                        }
                         tempFotoSebelum = nil
                     }
                 }
             }
         }
-        .onChange(of: tempFotoSetelah) { oldValue, newValue in
+
+        .onChange(of: tempFotoSetelah) { newValue in
             if let fotoBaruSetelah = newValue {
                 Task {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        self.controller.taskImage.append(
-                            TaskImage(
-                                task_id: "tasksid",
-                                taskimage_type: "2",
-                                taskimage_line: 20,
-                                taskimage_name: "foto_setelah_\(Date().timeIntervalSince1970).jpg",
-                                branch_id: self.controller.branch_id,
-                                image: fotoBaruSetelah
-                            )
-                        )
-                    }
+                    // Memastikan manipulasi data UI berjalan aman di Main Thread untuk iOS 16
                     await MainActor.run {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            self.controller.taskImage.append(
+                                TaskImage(
+                                    task_id: "tasksid",
+                                    taskimage_type: "2", // Tipe '2' untuk foto setelah
+                                    taskimage_line: 20,
+                                    taskimage_name: "foto_setelah_\(Date().timeIntervalSince1970).jpg",
+                                    branch_id: self.controller.branch_id,
+                                    image: fotoBaruSetelah
+                                )
+                            )
+                        }
+                        // Mengosongkan kembali variabel penampung sementara
                         tempFotoSetelah = nil
                     }
                 }
             }
         }
+
 
         .alert("Konfirmasi Keluar", isPresented: $showLogoutAlert) {
             Button("BATAL", role: .cancel) { }

@@ -144,11 +144,12 @@ struct TambahSparepartPopupView: View {
                     TextEditor(text: $deskripsi)
                         .font(.system(size: 16))
                         .frame(height: 100)
-                    .onChange(of: deskripsi) { oldValue, newValue in
-                        if newValue.count > 500 {
-                            deskripsi = String(newValue.prefix(500))
+                        .onChange(of: deskripsi) { newValue in
+                            if newValue.count > 500 {
+                                deskripsi = String(newValue.prefix(500))
+                            }
                         }
-                    }
+
 
                 }
                 .padding(8)

@@ -1,16 +1,25 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct LoginView: View {
     @EnvironmentObject var controller : Controller
     @State private var username: String = "userdev"
     @State private var password: String = "rahasia123"
+    @State private var BUconfig: String = ""
     
-    @Environment(\.modelContext) private var modelContext
-    @Query private var configs: [AppConfig]
     
     let menuColorString = "170,4,181,0"
     @State private var secretKey = "" // hendra
+    
+    // 1. Ambil Context dari Environment
+    @Environment(\.managedObjectContext) private var viewContext
+
+    // 2. Ambil semua data BusinessUnit dari database
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \BusinessUnit.bussinessunit_id, ascending: true)],
+        animation: .default)
+    
+    private var businessUnits: FetchedResults<BusinessUnit>
     
     var body: some View {
         ZStack {
@@ -88,7 +97,11 @@ struct LoginView: View {
                             self.controller.isLoading = true
                             self.controller.username = self.username
                             self.controller.user_password = self.password
-                            self.controller.getVersion(context: modelContext) 
+                            
+                            
+                            self.controller.getVersion()
+                            print("BUconfig : \(self.BUconfig) - controller.bussinessunit_id : \(self.controller.bussinessunit_id)")
+                            
                         }
                         
                     }) {
@@ -146,14 +159,22 @@ struct LoginView: View {
         }
     }
     
+      
+
+
     func loadConfig() {
-        if let savedConfig = configs.first {
-            controller.bussinessunit_id = savedConfig.bussinessunit_id
-            print("Data dimuat: \(controller.bussinessunit_id)")
-        } else {
-            print("Data kosong, menggunakan nilai default.")
-        }
+        self.controller.bussinessunit_id = businessUnits.first?.safeBusinessUnitId ?? ""
+        self.controller.BUConfig = businessUnits.first?.safeBusinessUnitId ?? ""
+        
+        print("BU : \(controller.bussinessunit_id)")
+//        if let savedConfig = configs.first {
+//            controller.bussinessunit_id = savedConfig.bussinessunit_id
+//            print("Data dimuat: \(controller.bussinessunit_id)")
+//        } else {
+//            print("Data kosong, menggunakan nilai default.")
+//        }
     }
+    
 //    func saveConfig() {
 //        for config in configs {
 //            modelContext.delete(config)
