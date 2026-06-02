@@ -14,6 +14,7 @@ class Controller : ObservableObject{
     @Published var imageUrl = "https://apidev.trans-property.com/assets/upload/"
     @Published var imageAssetUrl = "https://eprodev.trans-property.com/assets/upload/maintenance/"
     @Published var isProgress = false
+    @Published var BUConfig = ""
     
     
     @Published var showAlert = false
@@ -33,7 +34,7 @@ class Controller : ObservableObject{
     //themes
     @Published var theme_id = 0
     @Published var login_logo = "LOGO_69f36bd92b565.png"
-    @Published var login_body_color = "255,255,255,0"
+    @Published var login_body_color = "128,128,128,1"
     @Published var login_text1_color = "255,255,255,0"
     @Published var login_text2_color = "255,255,255,0"
     
@@ -238,24 +239,24 @@ class Controller : ObservableObject{
     }
      
 
-    func SaveConfig(context: ModelContext) {
-        do {
-            try context.delete(
-                        model: AppConfig.self
-                    )
-            try context.save()
-            
-            let newData = AppConfig(bussinessunit_id: self.bussinessunit_id)
-            
-            context.insert(newData)
-            try context.save()
-            
-            print("bussinessunit_id dengan id \(self.bussinessunit_id) berhasil diperbarui.")
-            
-        } catch {
-            print("Gagal memperbarui data bussinessunit_id : \(error.localizedDescription)")
-        }
-    }
+//    func SaveConfig() {
+//        do {
+//            try context.delete(
+//                        model: AppConfig.self
+//                    )
+//            try context.save()
+//            
+//            let newData = AppConfig(bussinessunit_id: self.bussinessunit_id)
+//            
+//            context.insert(newData)
+//            try context.save()
+//            
+//            print("bussinessunit_id dengan id \(self.bussinessunit_id) berhasil diperbarui.")
+//            
+//        } catch {
+//            print("Gagal memperbarui data bussinessunit_id : \(error.localizedDescription)")
+//        }
+//    }
     
     func toastShow(message: String, style: ToastStyle) {
         self.toastMessage = message
@@ -349,7 +350,7 @@ class Controller : ObservableObject{
         }.resume()
     }
   
-    func getVersion(context: ModelContext) {
+    func getVersion() {
         let apiname = "app/version"
         
         guard let url = URL(string: self.url_api + apiname) else { return }
@@ -399,7 +400,7 @@ class Controller : ObservableObject{
                     let dataObj = json["data"]
                     
                     if self.version == dataObj["appbuild_version"].stringValue {
-                        self.getLogin(context: context)
+                        self.getLogin()
                     } else {
                         self.responseMessage = "Bukan Versi terbaru, segera update aplikasi anda"
                         print("error : \(self.responseMessage)")
@@ -420,7 +421,7 @@ class Controller : ObservableObject{
     }
 
     
-    func getLogin(context: ModelContext) {
+    func getLogin() {
          
         let apiname = "auth/login-new-version"
         
@@ -489,7 +490,7 @@ class Controller : ObservableObject{
                     print("bussinessunit_name : \(self.bussinessunit_name)")
                     print("apiKey : \(self.apiKey)")
                     
-                    self.SaveConfig(context: context)
+//                    self.SaveConfig()
                     
                     self.getToken()
                      

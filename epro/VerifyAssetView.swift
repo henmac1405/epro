@@ -41,8 +41,8 @@ struct VerifyAssetView : View {
     var body: some View {
         VStack {
             Button(action: {
-                //                self.showQRScanner = true
-                self.findVerifyAsset(barcode : "10100006")
+                self.showQRScanner = true
+//                self.findVerifyAsset(barcode : "10100006")
             }) {
                 HStack {
                     Text("Scan Asset")

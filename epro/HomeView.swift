@@ -1,11 +1,19 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct HomeView: View {
     @EnvironmentObject var controller: Controller
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    @Query private var configs: [AppConfig]
+//    @Environment(\.dismiss) private var dismiss
+//    @Environment(\.modelContext) private var modelContext
+//    @Query private var configs: [AppConfig]
+     
+    @Environment(\.managedObjectContext) private var viewContext
+ 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \BusinessUnit.bussinessunit_id, ascending: true)],
+        animation: .default)
+    
+    private var businessUnits: FetchedResults<BusinessUnit>
     
     @State private var selectedTab: String = "HOME"
     @State private var showLogoutAlert: Bool = false
@@ -148,6 +156,9 @@ struct HomeView: View {
             self.controller.getTaskType(param : "0")
             self.controller.getPartType()
             primaryPurple = Color.fromRGBAString(self.controller.main_menu_color)
+            if self.controller.BUConfig != self.controller.bussinessunit_id {
+                deleteAllBusinessUnits()
+            }
         }
         .ignoresSafeArea(edges: .top)
         // MARK: - PROGRESSIVE DIALOG LOADING (Substitusi .alert)
@@ -183,13 +194,57 @@ struct HomeView: View {
     
     func loadConfigOld() {
         
-        if let savedConfig = configs.first {
-            controller.bussinessunit_id_old = savedConfig.bussinessunit_id
-            print("Data dimuat: \(controller.bussinessunit_id_old)")
-        } else {
-            print("Data kosong, menggunakan nilai default.")
-        }
+//        if let savedConfig = configs.first {
+            controller.bussinessunit_id_old = businessUnits.first?.safeBusinessUnitId ?? ""
+//            print("Data dimuat: \(controller.bussinessunit_id_old)")
+//        } else {
+//            print("Data kosong, menggunakan nilai default.")
+//        }
     }
+    func addBusinessUnit() {
+          withAnimation {
+              let newUnit = BusinessUnit(context: viewContext)
+               
+              let BUID = self.controller.bussinessunit_id
+              newUnit.bussinessunit_id = BUID
+              print("BUID : \(BUID)")
+              saveContext()
+          }
+      }
+   
+       func deleteUnits(offsets: IndexSet) {
+         withAnimation {
+             offsets.map { businessUnits[$0] }.forEach(viewContext.delete)
+             saveContext()
+         }
+     }
+
+       func saveContext() {
+         do {
+             try viewContext.save()
+         } catch {
+             let nsError = error as NSError
+             print("Gagal menyimpan Core Data: \(nsError), \(nsError.userInfo)")
+         }
+     }
+  
+  func deleteAllBusinessUnits() {
+      let fetchRequest: NSFetchRequest<NSFetchRequestResult> = BusinessUnit.fetchRequest()
+      let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+      
+      do {
+          try viewContext.execute(batchDeleteRequest)
+           
+          viewContext.reset()
+          
+          print("Semua data lama berhasil dibersihkan.")
+           
+          addBusinessUnit()
+          
+      } catch {
+          print("Gagal mengosongkan data: \(error.localizedDescription)")
+      }
+  }
     
 }
 
