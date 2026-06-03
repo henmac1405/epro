@@ -8,15 +8,15 @@ struct AssetHistoryView : View {
     let lightGrayBG = Color(red: 0.96, green: 0.95, blue: 0.97)
     
     @State private var showTable: Bool = false
-    
+    @State private var showQRScanner: Bool = false
+    @State private var searchAsset = ""
     
     var body: some View {
         VStack {
                 Button(action: {
-                    self.findHistoryAsset(barcode : "10100006")
-                    controller.getAssetHistory(barcode:"10100006")
+                    self.showQRScanner = true
                    
-                    showTable = true  // ← ini yang membuat tabel muncul
+//                    showTable = true  // ← ini yang membuat tabel muncul
                     
                 }) {
                     HStack {
@@ -33,6 +33,20 @@ struct AssetHistoryView : View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
+            
+            // MODAL POPUP KAMERA SCANNER QR/BARCODE
+            .sheet(isPresented: $showQRScanner) {
+                QRScannerView { hasilBarcode in
+                    print("QR Code Terdeteksi: \(hasilBarcode)")
+                    
+                    self.searchAsset = hasilBarcode
+                    self.findHistoryAsset(barcode : searchAsset)
+                    controller.getAssetHistory(barcode:searchAsset)
+               
+                }
+                .ignoresSafeArea()
+            }
+            
             
             
             if showTable {
