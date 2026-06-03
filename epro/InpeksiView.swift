@@ -88,24 +88,24 @@ struct InpeksiView: View {
                             .foregroundColor(.black)
                         Spacer()
                     }
-                    .sheet(isPresented: $showCalendar) {
-                        VStack {
-                            DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
-                                .datePickerStyle(.graphical)
-                                .padding()
-                            Button("Selesai")
-                            {
-                                let formatter = DateFormatter()
-                                formatter.dateFormat = "yyyy-MM-dd"
-                                self.task_date = formatter.string(from: self.showDate)
-                                self.filtertask_date = formatter.string(from: self.showDate)
-                                
-                                showCalendar = false
-                            }
-                            .padding()
-                        }
-                        .presentationDetents([.medium])
-                    }
+//                    .sheet(isPresented: $showCalendar) {
+//                        VStack {
+//                            DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
+//                                .datePickerStyle(.graphical)
+//                                .padding()
+//                            Button("Selesai")
+//                            {
+//                                let formatter = DateFormatter()
+//                                formatter.dateFormat = "yyyy-MM-dd"
+//                                self.task_date = formatter.string(from: self.showDate)
+//                                self.filtertask_date = formatter.string(from: self.showDate)
+//                                
+//                                showCalendar = false
+//                            }
+//                            .padding()
+//                        }
+//                        .presentationDetents([.medium])
+//                    }
                 }
                 .padding(.horizontal, 16)
                 .frame(height: 48)
@@ -376,6 +376,59 @@ struct InpeksiView: View {
         }
         .ignoresSafeArea(edges: .top)
         .padding(.bottom, -100)
+        .overlay {
+            if showCalendar {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showCalendar = false  
+                    }
+                 
+                VStack {
+                    DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .padding()
+                    Button(action: {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "yyyy-MM-dd"
+                        self.task_date = formatter.string(from: self.showDate)
+                        self.filtertask_date = formatter.string(from: self.showDate)
+
+                        withAnimation {
+                            showCalendar = false
+                        }
+                    }) {
+                        Text("Selesai")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(primaryPurple)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
+//                    Button("Selesai") {
+//                        let formatter = DateFormatter()
+//                        formatter.dateFormat = "yyyy-MM-dd"
+//                        self.task_date = formatter.string(from: self.showDate)
+//                        self.filtertask_date = formatter.string(from: self.showDate)
+//                        
+//                        withAnimation {
+//                            showCalendar = false
+//                        }
+//                    }
+//                    .padding()
+                }
+                .background(Color(.systemBackground))
+                .cornerRadius(16)
+                .shadow(radius: 10)
+                .padding(.horizontal, 24)
+                .transition(.scale.combined(with: .opacity))  
+            }
+        }
+        .animation(.easeInOut, value: showCalendar) // Animasi smooth saat showCalendar berubah
+
         
         
         

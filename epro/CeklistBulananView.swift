@@ -116,23 +116,23 @@ struct CeklistBulananView: View {
                             .foregroundColor(.black)
                         Spacer()
                     }
-                    .sheet(isPresented: $showCalendar) {
-                        VStack {
-                            DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
-                                .datePickerStyle(.graphical)
-                                .padding()
-                            Button("Selesai")
-                            {
-                                let formatter = DateFormatter()
-                                formatter.dateFormat = "yyyy-MM-dd"
-                                self.task_date = formatter.string(from: self.showDate)
-                                
-                                showCalendar = false
-                            }
-                            .padding()
-                        }
-                        .presentationDetents([.medium])
-                    }
+//                    .sheet(isPresented: $showCalendar) {
+//                        VStack {
+//                            DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
+//                                .datePickerStyle(.graphical)
+//                                .padding()
+//                            Button("Selesai")
+//                            {
+//                                let formatter = DateFormatter()
+//                                formatter.dateFormat = "yyyy-MM-dd"
+//                                self.task_date = formatter.string(from: self.showDate)
+//                                
+//                                showCalendar = false
+//                            }
+//                            .padding()
+//                        }
+//                        .presentationDetents([.medium])
+//                    }
                 }
                 .padding(.horizontal, 16)
                 .frame(height: 48)
@@ -417,6 +417,47 @@ struct CeklistBulananView: View {
             
             
         }
+        // Tempelkan modifier .overlay ini di view paling luar/kontainer utama Anda
+        .overlay {
+            if showCalendar {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation { showCalendar = false }
+                    }
+                 
+                VStack {
+                    DatePicker("Pilih Tanggal", selection: $showDate, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .padding()
+                    
+                    Button(action: {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "yyyy-MM-dd"
+                        self.task_date = formatter.string(from: self.showDate)
+                        
+                        withAnimation { showCalendar = false }
+                    }) {
+                        Text("Selesai")
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(primaryPurple)
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+                .background(Color(.systemBackground))
+                .cornerRadius(16)
+                .shadow(radius: 20)
+                .padding(.horizontal, 28)
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut, value: showCalendar)
+
     }
 }
 

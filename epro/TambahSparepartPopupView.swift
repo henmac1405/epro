@@ -35,13 +35,13 @@ struct TambahSparepartPopupView: View {
             }
         }
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 10) {
             // 1. JUDUL POPUP
             Text(editItem == nil ? "Tambah Item" : "Ubah Item")
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.black.opacity(0.8))
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 16)
+                .padding(.top, 10)
             
             // 2. FIELD INPUT NAMA ITEM
             HStack(spacing: 12) {
@@ -57,6 +57,7 @@ struct TambahSparepartPopupView: View {
                 TextField("Item", text: $namaItem)
                     .font(.system(size: 16))
                     .autocorrectionDisabled(true)
+                    .autocapitalization(.none)
             }
             .padding(.horizontal, 12)
             .frame(height: 56)
@@ -144,6 +145,8 @@ struct TambahSparepartPopupView: View {
                     TextEditor(text: $deskripsi)
                         .font(.system(size: 16))
                         .frame(height: 100)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled(true)
                         .onChange(of: deskripsi) { newValue in
                             if newValue.count > 500 {
                                 deskripsi = String(newValue.prefix(500))
@@ -207,6 +210,7 @@ struct TambahSparepartPopupView: View {
             Spacer()
         }
         .padding(24)
+        .padding(.bottom, 30)
         .background(Color(red: 0.95, green: 0.94, blue: 0.96))
         .onAppear() {
             selectedPartTypeName = self.controller.filtePartType(id: selectedPartType)
