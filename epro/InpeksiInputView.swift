@@ -780,33 +780,78 @@ struct InpeksiInputView: View {
                 
             }
         }
-        // POPUP MODAL KALENDER DIALOG
-        .sheet(isPresented: $showCalendar) {
-            VStack {
-                DatePicker("Pilih Tanggal", selection: $calendarDate, displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .accentColor(primaryPurple)
-                    .padding()
-                
-                Button(action: {
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "yyyy-MM-dd"
-                    self.taskDate = formatter.string(from: self.calendarDate)
-                    self.showCalendar = false
-                }) {
-                    Text("Selesai")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(primaryPurple)
-                        .cornerRadius(12)
+        // POPUP MODAL KALENDER DIALOG 
+        .overlay {
+            if showCalendar {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showCalendar = false
+                        }
+                    }
+                 
+                VStack {
+                    DatePicker("Pilih Tanggal", selection: $calendarDate, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .accentColor(primaryPurple)
+                        .padding()
+                    
+                    Button(action: {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "yyyy-MM-dd"
+                        self.taskDate = formatter.string(from: self.calendarDate)
+                        
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            self.showCalendar = false
+                        }
+                    }) {
+                        Text("Selesai")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(primaryPurple)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 20)
                 }
+                .background(Color(.systemBackground))
+                .cornerRadius(20)
+                .shadow(color: Color.black.opacity(0.15), radius: 15, x: 0, y: 10)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 16)
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
-            .presentationDetents([.medium])
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showCalendar)
+
+//        .sheet(isPresented: $showCalendar) {
+//            VStack {
+//                DatePicker("Pilih Tanggal", selection: $calendarDate, displayedComponents: .date)
+//                    .datePickerStyle(.graphical)
+//                    .accentColor(primaryPurple)
+//                    .padding()
+//                
+//                Button(action: {
+//                    let formatter = DateFormatter()
+//                    formatter.dateFormat = "yyyy-MM-dd"
+//                    self.taskDate = formatter.string(from: self.calendarDate)
+//                    self.showCalendar = false
+//                }) {
+//                    Text("Selesai")
+//                        .font(.system(size: 16, weight: .bold))
+//                        .foregroundColor(.white)
+//                        .frame(maxWidth: .infinity)
+//                        .frame(height: 48)
+//                        .background(primaryPurple)
+//                        .cornerRadius(12)
+//                }
+//                .padding(.horizontal, 24)
+//                .padding(.bottom, 16)
+//            }
+//            .presentationDetents([.medium])
+//        }
         .sheet(isPresented: $openKamera) {
             ImagePicker(image: $tempFotoSebelum, sourceType: .camera)
                 .ignoresSafeArea()
