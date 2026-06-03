@@ -38,7 +38,7 @@ struct TambahSparepartPopupView: View {
         VStack(spacing: 10) {
             // 1. JUDUL POPUP
             Text(editItem == nil ? "Tambah Item" : "Ubah Item")
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.black.opacity(0.8))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 10)
@@ -144,7 +144,7 @@ struct TambahSparepartPopupView: View {
                     
                     TextEditor(text: $deskripsi)
                         .font(.system(size: 16))
-                        .frame(height: 100)
+                        .frame(height: 80)
                         .autocapitalization(.none)
                         .autocorrectionDisabled(true)
                         .onChange(of: deskripsi) { newValue in
@@ -205,9 +205,9 @@ struct TambahSparepartPopupView: View {
                 }
                 
             }
-            .padding(.top, 8)
-            
-            Spacer()
+//            .padding(.top, 8)
+//            
+//            Spacer()
         }
         .padding(24)
         .padding(.bottom, 30)
