@@ -13,6 +13,7 @@ struct InpeksiInputView: View {
     @State private var asset_id: String = ""
     @State private var task_id: String = ""
     @State private var taskDate: String = ""
+    @State private var task_date: String = ""
     
     @State private var deskripsiPekerjaan: String = ""
     
@@ -77,33 +78,41 @@ struct InpeksiInputView: View {
     @State private var tempFotoSebelum: UIImage? = nil
     @State private var tempFotoSetelah: UIImage? = nil
     
+    @StateObject private var locationManager = LocationManager()
+    
+    @State private var alamatLengkap = ""
+    @State private var latitude = ""
+    @State private var longitude = ""
+    @State private var waterMark = ""
+    
     var body: some View {
         
         ZStack {
             
             VStack(spacing: 0) {
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "checklist.checked")
+                if self.controller.input_type != "MONTHLY" {
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "checklist.checked")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(primaryPurple)
+                        }
+                        
+                        Text("INPUT INPEKSI")
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(primaryPurple)
+                            .padding(.leading, 8)
+                        
+                        Spacer()
                     }
-                    
-                    Text("INPUT INPEKSI")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(primaryPurple)
-                        .padding(.leading, 8)
-                    
-                    Spacer()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
+                    .background(primaryPurple.opacity(0.12))
+                    .cornerRadius(12)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 16)
-                .background(primaryPurple.opacity(0.12))
-                .cornerRadius(12)
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 10)
-                
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 16) {
                         
@@ -316,6 +325,7 @@ struct InpeksiInputView: View {
                         if self.controller.input_type == "NEW" || self.controller.input_type == "EDIT" {
                             Button(action: {
                                 self.showPhotoOptions = true
+                                //self.alamatLengkap = self.locationManager.alamatLengkap
                             }) {
                                 HStack(spacing: 10) {
                                     Image(systemName: "photo.on.rectangle.angled")
@@ -674,7 +684,8 @@ struct InpeksiInputView: View {
                                     } else if taskDate == "" {
                                         self.controller.toastShow(message: "Gagal menyimpan, anda belum memilih Tanggal pekerjaan", style: .error)
                                     } else if self.controller.input_type == "MONTHLY" {
-                                        self.controller.submitTasksMonthly(task_id: task_id, task_date: taskDate, task_type: selectedTaskTypeID, task_ismonthly: 1, asset_id: asset_id, branch_id: selectedBranchID, taskscheduleDetil: self.controller.taskscheduleDetil)
+                                        self.controller.isProgress = true
+                                        self.controller.submitTasksMonthly(task_id: task_id, task_date: task_date, task_type: selectedTaskTypeID, task_ismonthly: 1, asset_id: asset_id, branch_id: selectedBranchID, taskscheduleDetil: self.controller.taskscheduleDetil)
                                         {
                                             jsonResult in
                                             
@@ -701,7 +712,8 @@ struct InpeksiInputView: View {
                                         }
                                     
                                     } else {
-                                        self.controller.submitTasksWithImages(task_id: task_id, task_date: taskDate, task_description: deskripsiPekerjaan, task_descriptionafter: deskripsiSetelahPekerjaan, task_type: selectedTaskTypeID, task_ismonthly: 0, asset_id: asset_id, branch_id: selectedBranchID, spareparts: self.controller.sparepartList)
+                                        self.controller.isProgress = true
+                                        self.controller.submitTasksWithImages(task_id: task_id, task_date: task_date, task_description: deskripsiPekerjaan, task_descriptionafter: deskripsiSetelahPekerjaan, task_type: selectedTaskTypeID, task_ismonthly: 0, asset_id: asset_id, branch_id: selectedBranchID, spareparts: self.controller.sparepartList)
                                         {
                                             jsonResult in
                                             
@@ -768,8 +780,11 @@ struct InpeksiInputView: View {
                     self.selectedJenisPekerjaan = controller.filteTaskType(id: self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_type : "")
                     print("selectedTaskTypeID : \(self.selectedTaskTypeID)")
                     print("selectedJenisPekerjaan : \(self.selectedJenisPekerjaan)")
-                    self.taskDate = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_date : ""
-                    print(self.controller.imageAssetUrl + self.asset_image)
+                    self.task_date = self.controller.taskDetil.count > 0 ? self.controller.taskDetil[0].task_date : ""
+                    self.taskDate = self.controller.formatTanggal(dari: self.task_date)
+                    print("task_date : \(self.task_date)")
+                    print("taskDate : \(self.taskDate)")
+                    print("asset image : \(self.controller.imageAssetUrl + self.asset_image)" )
                     
                     // checklist monthly
                     if self.controller.taskDetil[0].task_ismonthly == 1 {
@@ -779,6 +794,9 @@ struct InpeksiInputView: View {
                 }
                 
             }
+            
+            self.locationManager.requestLocation()
+                            
         }
         // POPUP MODAL KALENDER DIALOG 
         .overlay {
@@ -799,8 +817,12 @@ struct InpeksiInputView: View {
                     
                     Button(action: {
                         let formatter = DateFormatter()
-                        formatter.dateFormat = "yyyy-MM-dd"
+                        formatter.dateFormat = "dd-MM-yyyy"
                         self.taskDate = formatter.string(from: self.calendarDate)
+                        
+                        let formatter2 = DateFormatter()
+                        formatter2.dateFormat = "yyyy-MM-dd"
+                        self.task_date = formatter2.string(from: self.calendarDate)
                         
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             self.showCalendar = false
@@ -825,33 +847,7 @@ struct InpeksiInputView: View {
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showCalendar)
-
-//        .sheet(isPresented: $showCalendar) {
-//            VStack {
-//                DatePicker("Pilih Tanggal", selection: $calendarDate, displayedComponents: .date)
-//                    .datePickerStyle(.graphical)
-//                    .accentColor(primaryPurple)
-//                    .padding()
-//                
-//                Button(action: {
-//                    let formatter = DateFormatter()
-//                    formatter.dateFormat = "yyyy-MM-dd"
-//                    self.taskDate = formatter.string(from: self.calendarDate)
-//                    self.showCalendar = false
-//                }) {
-//                    Text("Selesai")
-//                        .font(.system(size: 16, weight: .bold))
-//                        .foregroundColor(.white)
-//                        .frame(maxWidth: .infinity)
-//                        .frame(height: 48)
-//                        .background(primaryPurple)
-//                        .cornerRadius(12)
-//                }
-//                .padding(.horizontal, 24)
-//                .padding(.bottom, 16)
-//            }
-//            .presentationDetents([.medium])
-//        }
+ 
         .sheet(isPresented: $openKamera) {
             ImagePicker(image: $tempFotoSebelum, sourceType: .camera)
                 .ignoresSafeArea()
@@ -935,21 +931,38 @@ struct InpeksiInputView: View {
                 }
             }
         }
+        // PERBAIKAN UTAMA (Kompatibel iOS 16): Memantau perubahan koordinat secara real-time
+        .onChange(of: locationManager.alamatLengkap) { _ in
+            // Panggil fungsi terisolasi di atas
+            self.sinkronisasiKoordinat()
+        }
+        
+        // MARK: - LOGIC TRIGGER FOTO SEBELUM DENGAN WATERMARK ALAMAT (KOMPATIBEL iOS 16)
         .onChange(of: tempFotoSebelum) { newValue in
             if let fotoBaru = newValue {
+                
+                self.sinkronisasiKoordinat()
+                
+                let getdate = self.controller.getFormattedDateYYYYMMddHHmmss()
+                self.waterMark = "\(getdate) \n\(self.latitude), \(self.longitude)\n\(self.alamatLengkap)"
+                print("watermark : \(self.waterMark)")
+                
                 Task {
-                    // Karena dijalankan di dalam Task nirkabel (asynchronous),
-                    // pastikan perubahan UI (withAnimation) dilakukan di Main Thread
+                    let fotoBerWatermark = self.addWatermark(to: fotoBaru, text: waterMark)
+                     
+                    let fotoSebelumLama = self.controller.taskImage.filter { $0.taskimage_type == "1" }
+                    let lineOtomatis = (fotoSebelumLama.count + 1) * 10
+                     
                     await MainActor.run {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             self.controller.taskImage.append(
                                 TaskImage(
-                                    task_id: "tasksid",
+                                    task_id: task_id,
                                     taskimage_type: "1",
-                                    taskimage_line: 10,
+                                    taskimage_line: lineOtomatis,
                                     taskimage_name: "foto_sebelum_\(Date().timeIntervalSince1970).jpg",
                                     branch_id: self.controller.branch_id,
-                                    image: fotoBaru
+                                    image: fotoBerWatermark
                                 )
                             )
                         }
@@ -958,30 +971,65 @@ struct InpeksiInputView: View {
                 }
             }
         }
-
+        
         .onChange(of: tempFotoSetelah) { newValue in
-            if let fotoBaruSetelah = newValue {
+            if let fotoBaru = newValue {
+                
+                self.sinkronisasiKoordinat()
+                
+                let getdate = self.controller.getFormattedDateYYYYMMddHHmmss()
+                self.waterMark = "\(getdate) \n\(self.latitude), \(self.longitude)\n\(self.alamatLengkap)"
+                print("watermark : \(self.waterMark)")
+                
                 Task {
-                    // Memastikan manipulasi data UI berjalan aman di Main Thread untuk iOS 16
+                    let fotosetelahBerWatermark = self.addWatermark(to: fotoBaru, text: waterMark)
+                     
+                    let fotoSetelahLama = self.controller.taskImage.filter { $0.taskimage_type == "2" }
+                    let lineOtomatis = (fotoSetelahLama.count + 1) * 10
+                     
                     await MainActor.run {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             self.controller.taskImage.append(
                                 TaskImage(
-                                    task_id: "tasksid",
-                                    taskimage_type: "2", // Tipe '2' untuk foto setelah
-                                    taskimage_line: 20,
+                                    task_id: task_id,
+                                    taskimage_type: "2",
+                                    taskimage_line: lineOtomatis,
                                     taskimage_name: "foto_setelah_\(Date().timeIntervalSince1970).jpg",
                                     branch_id: self.controller.branch_id,
-                                    image: fotoBaruSetelah
+                                    image: fotosetelahBerWatermark
                                 )
                             )
                         }
-                        // Mengosongkan kembali variabel penampung sementara
                         tempFotoSetelah = nil
                     }
                 }
             }
         }
+
+
+//        .onChange(of: tempFotoSetelah) { newValue in
+//            if let fotoBaruSetelah = newValue {
+//                Task {
+//                    // Memastikan manipulasi data UI berjalan aman di Main Thread untuk iOS 16
+//                    await MainActor.run {
+//                        withAnimation(.easeInOut(duration: 0.2)) {
+//                            self.controller.taskImage.append(
+//                                TaskImage(
+//                                    task_id: "tasksid",
+//                                    taskimage_type: "2", // Tipe '2' untuk foto setelah
+//                                    taskimage_line: 20,
+//                                    taskimage_name: "foto_setelah_\(Date().timeIntervalSince1970).jpg",
+//                                    branch_id: self.controller.branch_id,
+//                                    image: fotoBaruSetelah
+//                                )
+//                            )
+//                        }
+//                        // Mengosongkan kembali variabel penampung sementara
+//                        tempFotoSetelah = nil
+//                    }
+//                }
+//            }
+//        }
 
 
         .alert("Konfirmasi Keluar", isPresented: $showLogoutAlert) {
@@ -1022,6 +1070,72 @@ struct InpeksiInputView: View {
             }
         }
     }
+    func addWatermark(to image: UIImage, text: String) -> UIImage {
+        let size = image.size
+        
+        // 1. Buat kontainer/kanvas render sesuai ukuran gambar asli
+        let renderer = UIGraphicsImageRenderer(size: size)
+        
+        let newImage = renderer.image { context in
+            // Gambar foto asli ke kanvas
+            image.draw(in: CGRect(origin: .zero, size: size))
+            
+            // 2. Atur gaya huruf (Font) dan warna teks watermark
+            // Ukuran font otomatis menyesuaikan resolusi gambar (skala 2.5% dari tinggi gambar)
+            let fontSize = max(16, size.height * 0.025)
+            let font = UIFont.systemFont(ofSize: fontSize, weight: .bold)
+            
+            // Buat latar belakang hitam transparan di bawah teks agar tulisan selalu terbaca di latar terang/gelap
+            let textAttributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: UIColor.white, // Warna teks putih
+                .backgroundColor: UIColor.black.withAlphaComponent(0.5) // Kotak latar belakang hitam transparan
+            ]
+            
+            let attributedString = NSAttributedString(string: text, attributes: textAttributes)
+            
+            // 3. Tentukan posisi teks (Pojok kiri bawah gambar)
+            let padding: CGFloat = size.width * 0.03
+            let maxWidth = size.width - (padding * 2)
+            
+            // Hitung perkiraan tinggi teks jika baris kalimatnya panjang (auto-wrap)
+            let textRect = attributedString.boundingRect(
+                with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                context: nil
+            )
+            
+            // Posisi koordinat Y diatur di batas bawah dikurangi tinggi teks dan padding
+            let textPosition = CGRect(
+                x: padding,
+                y: size.height - textRect.height - padding,
+                width: maxWidth,
+                height: textRect.height
+            )
+            
+            // Gambar teks di atas kanvas
+            attributedString.draw(in: textPosition)
+        }
+        
+        return newImage
+    }
+    // Fungsi terisolasi agar compiler Xcode tidak kehabisan waktu (Timeout)
+    private func sinkronisasiKoordinat() {
+        if let koordinat = locationManager.location {
+            // PERBAIKAN: Konversi Double ke String secara presisi menggunakan format text
+            let latString = String(koordinat.latitude)
+            let lngString = String(koordinat.longitude)
+            
+            // Simpan hasil konversi String ke variabel State Anda
+            self.latitude = latString
+            self.longitude = lngString
+            self.alamatLengkap = self.locationManager.alamatLengkap
+            
+            print("🎯 Koordinat String Sukses Disimpan: \(latString), \(lngString) \n\(self.alamatLengkap)")
+        }
+    }
+
+
 }
 
 

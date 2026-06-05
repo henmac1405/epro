@@ -52,6 +52,11 @@ struct ContentView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .onAppear() {
+            self.controller.url_api = self.controller.url_api_prod + self.controller.url_api_path
+            self.controller.imageUrl = self.controller.imageUrl_prod + self.controller.imageUrl_path
+            self.controller.imageAssetUrl = self.controller.imageAssetUrl_prod + self.controller.imageAssetUrl_path
+        }
 
 
     }

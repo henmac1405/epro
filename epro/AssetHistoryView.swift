@@ -25,7 +25,7 @@ struct AssetHistoryView : View {
                         Text("Scan Asset")
                             .font(.system(size: 16, weight: .bold))
                     }
-                    .foregroundColor(.black)
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
                     .background(Color.fromRGBAString(self.controller.main_menu_color))

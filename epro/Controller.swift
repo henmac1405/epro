@@ -10,9 +10,26 @@ class Controller : ObservableObject{
     @Published var isLoggedIn = false
     @Published var isLoading = false
     @Published var isCorrect = true
-    @Published var url_api = "https://apidev.trans-property.com/index.php/api/v1/"
-    @Published var imageUrl = "https://apidev.trans-property.com/assets/upload/"
-    @Published var imageAssetUrl = "https://eprodev.trans-property.com/assets/upload/maintenance/"
+    
+    @Published var url_api_path = "/index.php/api/v1/"
+    @Published var imageUrl_path = "/assets/upload/"
+    @Published var imageAssetUrl_path = "/assets/upload/maintenance/"
+    
+    @Published var url_api = ""
+    @Published var imageUrl = ""
+    @Published var imageAssetUrl = ""
+    
+    @Published var url_api_dev = "https://apidev.trans-property.com"
+    @Published var imageUrl_dev = "https://apidev.trans-property.com"
+    @Published var imageAssetUrl_dev = "https://eprodev.trans-property.com"
+    
+    @Published var url_api_prod = "https://api.trans-property.com"
+    @Published var imageUrl_prod = "https://api.trans-property.com"
+    @Published var imageAssetUrl_prod = "https://epro.trans-property.com"
+    
+    @Published var isDebug = false
+    @Published var debugDescr = ""
+    
     @Published var isProgress = false
     @Published var BUConfig = ""
     
@@ -88,6 +105,8 @@ class Controller : ObservableObject{
     
     @Published var selectedTaskForEdit: Tasks? = nil
     
+    @Published var foto_before_url : [String] = []
+    @Published var foto_after_url : [String] = []
 
     @Published var showToast: Bool = false
     @Published var toastMessage: String = ""
@@ -171,6 +190,18 @@ class Controller : ObservableObject{
         return formatter.string(from: Date())
     }
     
+    func getFormattedDateYYYYMMddHHmmss() -> String {
+        let formatter = DateFormatter()
+        
+        
+        formatter.locale = Locale(identifier: "id_ID")
+        
+        
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        
+        return formatter.string(from: Date())
+    }
+    
     func getFormattedTime() -> String {
         let formatter = DateFormatter()
         
@@ -183,6 +214,20 @@ class Controller : ObservableObject{
         return formatter.string(from: Date())
     }
     
+    func formatTanggal(dari tanggalString: String) -> String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+         
+        guard let dateObjek = inputFormatter.date(from: tanggalString) else {
+            return tanggalString
+        }
+         
+        let outputFormatter = DateFormatter()
+        outputFormatter.dateFormat = "dd-MM-yyyy"
+         
+        return outputFormatter.string(from: dateObjek)
+    }
+
     func formatNumber(_ value: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -294,6 +339,8 @@ class Controller : ObservableObject{
         
         return newImage ?? image
     }
+
+    
 
     // MARK: - API ----------------------------------------------------------------------------------------------
        
@@ -579,7 +626,7 @@ class Controller : ObservableObject{
         
         guard let url = URL(string: self.url_api + apiname) else { return }
         print(url)
-        print("tutup")
+        print("TIMESTAMP : \(timestampWithZ)")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         
@@ -602,7 +649,7 @@ class Controller : ObservableObject{
                 print("Error:", error.localizedDescription)
                 DispatchQueue.main.async {
                     self.showAlert = true
-                    self.responseMessage = "Error : \(error.localizedDescription)"
+                    self.responseMessage = "Error 1 : \(error.localizedDescription)"
                     self.isLoading = false
                 }
                 return
@@ -673,7 +720,7 @@ class Controller : ObservableObject{
                      
                 } else {
                     self.responseMessage = message
-                    print("error : \(self.responseMessage)")
+                    print("error 2 : \(self.responseMessage)")
                     self.isCorrect = false
                     self.isLoading = false
                     self.showAlert = true
@@ -803,7 +850,7 @@ class Controller : ObservableObject{
             
             let json = JSON(data)
             let message = json["message"].stringValue
-            print("json : \(json)")
+//            print("json : \(json)")
             print("message : \(message)")
             print(json["state"])
             DispatchQueue.main.async {
@@ -895,6 +942,8 @@ class Controller : ObservableObject{
 //                self.taskPartType.removeAll()
                 self.sparepartList.removeAll()
                 self.taskImage.removeAll()
+                self.foto_after_url.removeAll()
+                self.foto_before_url.removeAll()
                 self.responseMessage = message
                 self.isProgress = false
                 
@@ -942,11 +991,20 @@ class Controller : ObservableObject{
                         let taskimage_line = subJson["taskimage_line"].intValue
                         let taskimage_name = subJson["taskimage_name"].stringValue
                         let branch_id = subJson["branch_id"].stringValue
-                        print("taskimage_name \(taskimage_name)")
+                        
                         let urlGambarNetwork = self.imageUrl + "maintenance/" + taskimage_name
+                        print("urlGambarNetwork : \(urlGambarNetwork)")
+                        if taskimage_type == "1" {
+                            self.foto_before_url.append(taskimage_name)
+                        } else {
+                            self.foto_after_url.append(taskimage_name)
+                        }
+                        
+                        
                         
                         Task {
                             if let img = await self.downloadUIImage(from: urlGambarNetwork) {
+                                print(img)
                                 withAnimation {
                                     self.taskImage.append(
                                         TaskImage(
@@ -1040,7 +1098,7 @@ class Controller : ObservableObject{
             "task_ismonthly": String(task_ismonthly),
             "asset_id": asset_id,        // Sekarang dikirim via POST Body, CodeIgniter PASTI bisa baca
             "branch_id": branch_id,
-            "username": self.username
+            "username": self.username,
         ]
         print(textParameters)
         // Bungkus semua teks ke format multipart biner
@@ -1094,9 +1152,36 @@ class Controller : ObservableObject{
             body.append(imageData)
             body.append("\r\n".data(using: .utf8)!)
         }
-        // =========================================================================
-
+         
+        // 5. Konversi Array Foto Sebelum (Before URL)
+        let jsonBeforeString: String
+        if let dataBefore = try? JSONSerialization.data(withJSONObject: self.foto_before_url, options: []),
+           let convertedBefore = String(data: dataBefore, encoding: .utf8) {
+            jsonBeforeString = convertedBefore
+        } else {
+            jsonBeforeString = "[]"
+        }
+        print("jsonBeforeString : \(jsonBeforeString)")
         
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"foto_before_url\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(jsonBeforeString)\r\n".data(using: .utf8)!)
+
+        // 6. Konversi Array Foto Setelah (After URL)
+        let jsonAfterString: String
+        if let dataAfter = try? JSONSerialization.data(withJSONObject: self.foto_after_url, options: []),
+           let convertedAfter = String(data: dataAfter, encoding: .utf8) {
+            jsonAfterString = convertedAfter
+        } else {
+            jsonAfterString = "[]"
+        }
+        print("jsonAfterString : \(jsonAfterString)")
+        
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"foto_after_url\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(jsonAfterString)\r\n".data(using: .utf8)!)
+        // =========================================================================
+ 
         // Penutup Akhir Baris Multipart Body
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         request.httpBody = body
@@ -2323,14 +2408,17 @@ class Controller : ObservableObject{
     
     func downloadUIImage(from urlString: String) async -> UIImage? {
         guard let url = URL(string: urlString) else { return nil }
+         
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 15
         
-        do {
-            // Mengunduh data dari internet
-            let (data, _) = try await URLSession.shared.data(from: url)
-            // Mengonversi Data menjadi UIImage
+        do { 
+            let (data, _) = try await URLSession.shared.data(for: request)
             return UIImage(data: data)
         } catch {
-            print("Error download gambar: \(error)")
+            print("Error download gambar terbaru: \(error.localizedDescription)")
             return nil
         }
     }
