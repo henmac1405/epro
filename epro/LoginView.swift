@@ -3,8 +3,8 @@ import CoreData
 
 struct LoginView: View {
     @EnvironmentObject var controller : Controller
-    @State private var username: String = "debug on"
-    @State private var password: String = "apipapip"
+    @State private var username: String = ""
+    @State private var password: String = ""
     @State private var BUconfig: String = ""
     
     @State private var inputUrl: String = ""
@@ -100,32 +100,39 @@ struct LoginView: View {
                     )
                     
                     Button(action: {
-                        if self.username.isEmpty || self.password.isEmpty {
-                            self.controller.showAlert = true
-                            self.controller.responseMessage = "Username dan password tidak boleh kosong"
-                        } else if self.username == "debug off" && self.password == "apipapip" {
+                        if self.username == "DEBUG OFF" {
                             self.controller.isDebug = false
                             self.controller.url_api = self.controller.url_api_prod + self.controller.url_api_path
                             self.controller.imageUrl = self.controller.imageUrl_prod + self.controller.imageUrl_path
                             self.controller.imageAssetUrl = self.controller.imageAssetUrl_prod + self.controller.imageAssetUrl_path
-                            self.isDialog = false
                             self.username = ""
                             self.password = ""
-                        } else if self.username == "debug on" && self.password == "apipapip" {
+                            self.controller.debugDescr = self.controller.url_api_prod
+                        } else if self.username == "DEBUG ON" {
                             self.username = ""
                             self.password = ""
-                            self.isTextFieldFocused = true
-                            self.isDialog = true
-                            self.inputUrl = self.controller.url_api_dev
+                            self.controller.isDebug = true
+                            self.controller.url_api = self.controller.url_api_dev + self.controller.url_api_path
+                            self.controller.imageUrl = self.controller.imageUrl_dev + self.controller.imageUrl_path
+                            self.controller.imageAssetUrl = self.controller.imageAssetUrl_dev + self.controller.imageAssetUrl_path
+                            self.controller.debugDescr = self.controller.url_api_dev
                         } else {
-                            self.controller.isLoading = true
-                            self.controller.username = self.username
-                            self.controller.user_password = self.password
-                            
-                            
-                            self.controller.getVersion()
-                            print("BUconfig : \(self.BUconfig) - controller.bussinessunit_id : \(self.controller.bussinessunit_id)")
-                            
+                            if self.username.isEmpty || self.password.isEmpty {
+                                self.controller.showAlert = true
+                                self.controller.responseMessage = "Username dan password tidak boleh kosong"
+                                
+                                
+                                
+                            } else {
+                                self.controller.isLoading = true
+                                self.controller.username = self.username
+                                self.controller.user_password = self.password
+                                
+                                
+                                self.controller.getVersion()
+                                print("BUconfig : \(self.BUconfig) - controller.bussinessunit_id : \(self.controller.bussinessunit_id)")
+                                
+                            }
                         }
                         
                     }) {
