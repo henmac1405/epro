@@ -255,12 +255,15 @@ struct InpeksiView: View {
                             HStack(spacing: 0) {
                                 Text("ID")
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 10)
                                 
                                 Text("Description")
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 10)
                                 
                                 Text("Tanggal")
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 10)
                                 
                                 Text("Aksi")
                                     .frame(width: 60, alignment: .trailing)
@@ -286,22 +289,19 @@ struct InpeksiView: View {
                                             .font(.system(size: 15, weight: .regular))
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding()
-                                        
+                                            .padding(.leading, 10)
                                         // Kolom 2: Deskripsi
                                         Text(item.task_description)
                                             .font(.system(size: 15, weight: .regular))
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding()
-                                        
+                                            .padding(.leading, 10)
                                         // Kolom 3: Tanggal
                                         Text(item.task_date)
                                             .font(.system(size: 15, weight: .regular))
                                             .foregroundColor(.black)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding()
-                                        
+                                            .padding(.leading, 10)
                                         // Kolom 4: Aksi Edit
                                         Button(action: {
                                             print("Mengedit item: \(item.task_description)")

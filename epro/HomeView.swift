@@ -62,6 +62,8 @@ struct HomeView: View {
                                 .padding(.top, 5)
                                 .padding(.bottom, 20)
                             
+                            
+                            
                             VStack(spacing: 24) {
                                 AsyncImage(url: URL(string: self.controller.imageUrl + "themes/" + self.controller.main_image_header)) { phase in
                                             if let image = phase.image {
@@ -78,6 +80,13 @@ struct HomeView: View {
                                                     .frame(height: 220)
                                             }
                                         }
+                                
+                                if self.controller.isDebug {
+                                    Text("Debug On : \(self.controller.debugDescr)")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.red) 
+                                }
+                                
                                 
                                 switch controller.pageName {
                                         case "HOME":
